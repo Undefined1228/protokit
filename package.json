@@ -61,7 +61,16 @@
         "category": "ProtoKit",
         "icon": "$(add)"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "protokit.newRequest",
+          "when": "view == protokit.collections",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

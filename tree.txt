@@ -1,0 +1,37 @@
+/Users/ahnch/hwan_projects/protokit
+├── CHANGELOG.md
+├── esbuild.js
+├── eslint.config.mjs
+├── LICENSE
+├── media
+│   └── protokit.svg
+├── package.json
+├── plans
+│   ├── checklist
+│   │   ├── phase1-checklist.md
+│   │   ├── phase2-checklist.md
+│   │   ├── phase3-checklist.md
+│   │   ├── phase4-checklist.md
+│   │   ├── phase5-checklist.md
+│   │   ├── phase6-checklist.md
+│   │   ├── phase7-checklist.md
+│   │   ├── phase8-checklist.md
+│   │   └── phase9-checklist.md
+│   ├── overview.md
+│   └── phase
+│       ├── phase1.md
+│       ├── phase2.md
+│       ├── phase3.md
+│       ├── phase4.md
+│       ├── phase5.md
+│       ├── phase6.md
+│       ├── phase7.md
+│       ├── phase8.md
+│       └── phase9.md
+├── README.md
+├── src
+│   └── extension.ts
+├── tree.txt
+└── tsconfig.json
+
+6 directories, 29 files

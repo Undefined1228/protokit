@@ -1,26 +1,12 @@
 import * as vscode from 'vscode';
+import { RequestEditorPanel } from './panels/RequestEditorPanel';
 
 export function activate(context: vscode.ExtensionContext) {
-	const disposable = vscode.commands.registerCommand('protokit.open', () => {
-		const panel = vscode.window.createWebviewPanel(
-			'protokit',
-			'ProtoKit',
-			vscode.ViewColumn.One,
-			{}
-		);
-		panel.webview.html = `<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ProtoKit</title>
-</head>
-<body>
-</body>
-</html>`;
-	});
+  const disposable = vscode.commands.registerCommand('protokit.newRequest', () => {
+    RequestEditorPanel.create(context);
+  });
 
-	context.subscriptions.push(disposable);
+  context.subscriptions.push(disposable);
 }
 
 export function deactivate() {}
