@@ -1,5 +1,14 @@
 # Phase 6 — GraphQL
 
+## 참고 Phase
+
+| 구분 | Phase |
+|------|-------|
+| 선행 | Phase 1 — 요청 편집기·응답 뷰어 UI 패턴 참고 |
+| 참고 | Phase 5 — Subscription 스트림 뷰어는 WebSocket 스트림 구조 참고 |
+
+---
+
 ## 목표
 
 GraphQL Query · Mutation · Subscription을 클라이언트·서버 양쪽에서 테스트.
