@@ -20,16 +20,23 @@
 
 ### 요청 전송
 
+- `Ctrl+Enter` 단축키로 요청 전송
 - 요청 취소 (전송 중 취소 버튼)
 - Timeout 설정 (기본값 30초)
 - SSL 인증서 검증 무시 옵션 (개발 환경용)
+
+### 요청 내보내기
+
+- 현재 요청을 cURL 커맨드로 복사
+- 코드 스니펫 생성 (fetch, axios, Python requests)
 
 ### 응답 뷰어
 
 - Status code / 응답 시간 / 응답 크기 표시
 - 탭 구성
-  - Body: JSON 포맷팅 + 구문 강조, 잘못된 JSON 경고
+  - Body: JSON 포맷팅 + 구문 강조, Pretty / Raw 토글, 잘못된 JSON 경고
   - Headers: 응답 헤더 목록
+- 응답 body 파일로 저장
 
 ### 히스토리
 
