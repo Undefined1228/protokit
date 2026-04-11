@@ -1,14 +1,5 @@
 # Phase 5 — WebSocket
 
-## 참고 Phase
-
-| 구분 | Phase |
-|------|-------|
-| 선행 | Phase 1 — UI 패턴 (연결 상태 표시, 스트림 뷰어 구조) 참고 |
-| 이후 | Phase 8 (Socket.IO는 WebSocket 위에서 동작, 구현 구조 재활용) |
-
----
-
 ## 목표
 
 WebSocket 연결을 클라이언트·서버 양쪽에서 테스트.

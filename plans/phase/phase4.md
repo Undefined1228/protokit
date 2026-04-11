@@ -1,14 +1,5 @@
 # Phase 4 — 응답 검증 & Collection Runner
 
-## 참고 Phase
-
-| 구분 | Phase |
-|------|-------|
-| 선행 | Phase 1 — Assertions는 요청·응답 흐름 기반 |
-| 선행 | Phase 2 — Collection Runner는 컬렉션 구조에 의존 |
-
----
-
 ## 목표
 
 단순 요청·응답 확인을 넘어, 자동화된 API 테스트 도구로 확장.

@@ -1,14 +1,5 @@
 # Phase 3 — 인증 (Auth)
 
-## 참고 Phase
-
-| 구분 | Phase |
-|------|-------|
-| 선행 | Phase 1 — Auth 탭이 Phase 1에서 Bearer Token으로 시작, 여기서 확장 |
-| 병행 가능 | Phase 2와 독립적으로 진행 가능 |
-
----
-
 ## 목표
 
 Bearer Token 외 추가 인증 방식을 요청 편집기에서 바로 설정.
