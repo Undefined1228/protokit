@@ -4,10 +4,24 @@
   "displayName": "ProtoKit",
   "description": "REST API and multi-protocol testing tool for VS Code",
   "version": "0.0.1",
+  "license": "MIT",
+  "keywords": [
+    "rest",
+    "api",
+    "http",
+    "websocket",
+    "graphql",
+    "client",
+    "testing"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/Undefined1228/protokit"
   },
+  "bugs": {
+    "url": "https://github.com/Undefined1228/protokit/issues"
+  },
+  "homepage": "https://github.com/Undefined1228/protokit#readme",
   "engines": {
     "vscode": "^1.96.0"
   },
@@ -37,7 +51,8 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "deploy": "vsce publish"
   },
   "devDependencies": {
     "@types/vscode": "^1.96.0",
@@ -50,6 +65,7 @@
     "npm-run-all": "^4.1.5",
     "typescript": "^5.8.2",
     "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1"
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.0.0"
   }
 }
