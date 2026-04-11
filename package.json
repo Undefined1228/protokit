@@ -31,11 +31,35 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "protokit",
+          "title": "ProtoKit",
+          "icon": "media/protokit.svg"
+        }
+      ]
+    },
+    "views": {
+      "protokit": [
+        {
+          "id": "protokit.collections",
+          "name": "컬렉션",
+          "initialSize": 7
+        },
+        {
+          "id": "protokit.history",
+          "name": "히스토리",
+          "initialSize": 3
+        }
+      ]
+    },
     "commands": [
       {
-        "command": "protokit.open",
-        "title": "ProtoKit 열기",
-        "category": "ProtoKit"
+        "command": "protokit.newRequest",
+        "title": "새 요청",
+        "category": "ProtoKit",
+        "icon": "$(add)"
       }
     ]
   },
