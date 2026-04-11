@@ -3,3 +3,24 @@ dist
 out
 .vscode-test/
 *.vsix
+
+# 환경변수 및 시크릿
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+secrets.json
+credentials.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 로그
+*.log
+logs/
