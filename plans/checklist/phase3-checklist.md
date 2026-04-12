@@ -14,7 +14,13 @@
 
 ## Auth 탭 확장
 
-- [ ] Basic Auth: username / password 입력
-- [ ] Basic Auth: Base64 인코딩 후 Authorization 헤더 자동 삽입
-- [ ] API Key: 헤더에 key/value 삽입
-- [ ] API Key: 쿼리 파라미터에 key/value 삽입
+- [x] Basic Auth: username / password 입력
+- [x] Basic Auth: Base64 인코딩 후 Authorization 헤더 자동 삽입
+- [x] API Key: 헤더에 key/value 삽입
+- [x] API Key: 쿼리 파라미터에 key/value 삽입
+
+---
+
+## 완료 후 처리
+
+- [x] `CHANGELOG.md`에 해당 페이즈 변경 내용 추가

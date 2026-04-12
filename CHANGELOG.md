@@ -1,5 +1,32 @@
 # 변경 이력
 
+## [Unreleased]
+
+### 추가 — Phase 3: 인증 확장
+
+- Basic Auth: username / password 입력 → Base64 인코딩 후 `Authorization: Basic ...` 헤더 자동 삽입
+- API Key: key / value 입력 + 삽입 위치 선택 (Header / Query Param)
+
+### 추가 — Phase 2: 프로젝트 & 컬렉션 & 환경변수
+
+- 프로젝트 생성 · 이름 변경 · 삭제 · 전환
+- 컬렉션 생성 · 이름 변경 · 삭제 · TreeView 표시
+- 요청 저장 · 이름 변경 · 삭제 · 순서 변경 · 복제 · 복원
+- 컬렉션 / 히스토리 요청 검색
+- 환경(Environment) 생성 · 전환 · 변수 편집
+- URL · Headers · Body에서 `{{변수명}}` 치환
+
+### 추가 — Phase 1: REST API 기본 테스트
+
+- 요청 편집기: Method · URL · Params · Headers · Body (JSON / form-data / urlencoded)
+- Body 타입 선택 시 Content-Type 헤더 자동 설정
+- Auth: Bearer Token → `Authorization` 헤더 자동 삽입
+- 요청 전송 / 취소, Timeout · SSL 무시 · Proxy · Redirect 설정
+- Cookie 자동 관리 · 수동 편집
+- cURL 복사 및 코드 스니펫 생성 (fetch · axios · Python · Java)
+- 응답 뷰어: status · 시간 · 크기 · Body · Headers · 파일 저장
+- 히스토리 자동 저장 · 목록 표시 · 복원
+
 ## [0.0.1] - 2026-04-11
 
 ### 추가

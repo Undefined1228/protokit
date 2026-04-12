@@ -32,3 +32,9 @@
 - [ ] Resolver 정의 (필드별 반환값 설정)
 - [ ] Subscription 이벤트 수동 발행 (테스트용)
 - [ ] 내장 Playground UI (브라우저 없이 쿼리 테스트 가능)
+
+---
+
+## 완료 후 처리
+
+- [ ] `CHANGELOG.md`에 해당 페이즈 변경 내용 추가
