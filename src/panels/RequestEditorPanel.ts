@@ -41,7 +41,9 @@ interface SaveRequestPayload {
   authApiKeyKey: string;
   authApiKeyValue: string;
   authApiKeyIn: string;
-  assertions?: Omit<Assertion, 'id'>[];
+  timeout?: number;
+  sslIgnore?: boolean;
+  assertions?: Assertion[];
 }
 
 export class RequestEditorPanel {
@@ -52,6 +54,8 @@ export class RequestEditorPanel {
     private readonly store: ProtoKitStore,
     private readonly context: vscode.ExtensionContext,
     private readonly initialRequest?: SavedRequest,
+    private readonly initialProjectId?: string,
+    private readonly initialCollId?: string,
   ) {
     panel.webview.html = buildWebviewHtml();
   }
@@ -60,6 +64,8 @@ export class RequestEditorPanel {
     context: vscode.ExtensionContext,
     store: ProtoKitStore,
     initialRequest?: SavedRequest,
+    projectId?: string,
+    collId?: string,
   ): void {
     const title = initialRequest ? initialRequest.name : '새 요청';
     const panel = vscode.window.createWebviewPanel(
@@ -68,7 +74,7 @@ export class RequestEditorPanel {
       vscode.ViewColumn.Active,
       { enableScripts: true, retainContextWhenHidden: true },
     );
-    const editor = new RequestEditorPanel(panel, store, context, initialRequest);
+    const editor = new RequestEditorPanel(panel, store, context, initialRequest, projectId, collId);
     panel.webview.onDidReceiveMessage(
       (msg: { type: string; payload: unknown }) => editor.handleMessage(msg),
       null,
@@ -103,6 +109,32 @@ export class RequestEditorPanel {
   }
 
   private async handleSaveRequest(payload: SaveRequestPayload): Promise<void> {
+    if (this.initialRequest && this.initialProjectId && this.initialCollId) {
+      const choice = await vscode.window.showQuickPick(
+        [
+          { label: '현재 요청 업데이트', value: 'update' },
+          { label: '새 요청으로 저장', value: 'new' },
+        ],
+        { placeHolder: '저장 방식 선택' },
+      );
+      if (!choice) return;
+
+      if (choice.value === 'update') {
+        this.store.updateRequest(
+          this.initialProjectId,
+          this.initialCollId,
+          this.initialRequest.id,
+          { name: this.initialRequest.name, ...payload },
+        );
+        vscode.window.showInformationMessage(`"${this.initialRequest.name}" 요청이 업데이트되었습니다.`);
+        return;
+      }
+    }
+
+    await this.saveAsNew(payload);
+  }
+
+  private async saveAsNew(payload: SaveRequestPayload): Promise<void> {
     const project = this.store.getActiveProject();
     if (!project) {
       vscode.window.showWarningMessage('활성 프로젝트가 없습니다. 먼저 프로젝트를 만들어 주세요.');
@@ -134,7 +166,7 @@ export class RequestEditorPanel {
     const name = await vscode.window.showInputBox({ prompt: '요청 이름', value: defaultName });
     if (!name?.trim()) return;
 
-    this.store.saveRequest(project.id, colPick.id, { name: name.trim(), ...payload });
+    this.store.saveRequest(updated.id, colPick.id, { name: name.trim(), ...payload });
     vscode.window.showInformationMessage(`"${name.trim()}" 요청이 저장되었습니다.`);
   }
 
@@ -2697,6 +2729,15 @@ function loadRequest(req) {
   });
   renderAssertions();
 
+  if (req.timeout !== undefined) {
+    settings.timeout = req.timeout;
+    document.getElementById('timeout-input').value = String(req.timeout);
+  }
+  if (req.sslIgnore !== undefined) {
+    settings.sslIgnore = req.sslIgnore;
+    document.getElementById('ssl-ignore').checked = req.sslIgnore;
+  }
+
   renderHeaders();
   updateBadges();
   switchTab('params');
@@ -2722,6 +2763,8 @@ document.getElementById('save-req-btn').addEventListener('click', () => {
       authApiKeyKey: state.auth.apiKeyKey,
       authApiKeyValue: state.auth.apiKeyValue,
       authApiKeyIn: state.auth.apiKeyIn,
+      timeout: settings.timeout,
+      sslIgnore: settings.sslIgnore,
       assertions: assertions.map(function(a) {
         return { enabled: a.enabled, type: a.type, operator: a.operator, target: a.target, value: a.value };
       }),

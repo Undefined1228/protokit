@@ -243,11 +243,20 @@ export class CollectionRunnerPanel {
       } else if (req.bodyType === 'urlencoded') {
         const items = (req.bodyUrlEncoded ?? []).filter(f => f.enabled && f.key.trim());
         body = items.map(f => encodeURIComponent(sub(f.key.trim())) + '=' + encodeURIComponent(sub(f.value))).join('&') || undefined;
+      } else if (req.bodyType === 'form-data') {
+        const items = (req.bodyFormData ?? []).filter(f => f.enabled && f.key.trim());
+        if (items.length) {
+          const boundary = '----FormBoundary' + Math.random().toString(36).slice(2);
+          headers['Content-Type'] = `multipart/form-data; boundary=${boundary}`;
+          body = items.map(f =>
+            `--${boundary}\r\nContent-Disposition: form-data; name="${sub(f.key.trim())}"\r\n\r\n${sub(f.value)}`
+          ).join('\r\n') + `\r\n--${boundary}--`;
+        }
       }
 
       try {
         const response = await sendHttpRequest(
-          { method: req.method, url, headers, body, timeout: 30, sslIgnore: false },
+          { method: req.method, url, headers, body, timeout: req.timeout ?? 30, sslIgnore: req.sslIgnore ?? false },
           this.abortController.signal,
         );
 

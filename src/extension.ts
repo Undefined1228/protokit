@@ -119,7 +119,7 @@ export function activate(context: vscode.ExtensionContext) {
     }),
 
     vscode.commands.registerCommand('protokit.openSavedRequest', (item: RequestItem) => {
-      RequestEditorPanel.create(context, store, item.request);
+      RequestEditorPanel.create(context, store, item.request, item.projectId, item.collectionId);
     }),
 
     vscode.commands.registerCommand('protokit.renameRequest', async (item: RequestItem) => {

@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### 수정 — Phase 4.5: QA 버그픽스 & 누락 기능 보완
+
+- **B-1**: 저장된 요청 업데이트 — 컬렉션에서 연 요청 저장 시 "현재 요청 업데이트 / 새 요청으로 저장" QuickPick 제공. `store.updateRequest()` 구현
+- **B-2**: Collection Runner form-data body 처리 — multipart/form-data 직렬화 및 `Content-Type` 헤더(boundary 포함) 자동 설정
+- **B-3**: Collection Runner timeout · sslIgnore — `SavedRequest`에 `timeout?` · `sslIgnore?` 필드 추가. 요청 저장 시 현재 설정값 포함, Runner 실행 시 저장값 사용(미설정 시 기본값 30s / false)
+- **U-2**: `Assertion` 인터페이스에서 미사용 `id?` 필드 제거
+
 ### 추가 — Phase 4: 응답 검증 & Collection Runner
 
 - **Assertions 탭**: 요청별 검증 조건 정의 (Status Code · Body 필드 존재/값 · 응답 시간)

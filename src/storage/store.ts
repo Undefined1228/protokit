@@ -24,6 +24,8 @@ export interface SavedRequest {
   authApiKeyKey?: string;
   authApiKeyValue?: string;
   authApiKeyIn?: string;
+  timeout?: number;
+  sslIgnore?: boolean;
   assertions?: Assertion[];
 }
 
@@ -48,7 +50,6 @@ export interface Project {
 }
 
 export interface Assertion {
-  id?: string;
   enabled: boolean;
   type: 'status' | 'body_exists' | 'body_eq' | 'duration';
   operator: string;
@@ -187,6 +188,13 @@ export class ProtoKitStore {
     col.requests.push(saved);
     this.persist();
     return saved;
+  }
+
+  updateRequest(projectId: string, collId: string, reqId: string, data: Omit<SavedRequest, 'id'>): void {
+    const req = this.findRequest(projectId, collId, reqId);
+    if (!req) return;
+    Object.assign(req, data);
+    this.persist();
   }
 
   renameRequest(projectId: string, collId: string, reqId: string, name: string): void {
