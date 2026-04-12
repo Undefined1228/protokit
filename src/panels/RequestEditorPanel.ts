@@ -38,7 +38,24 @@ export class RequestEditorPanel {
       case 'cancelRequest':
         this.abortController?.abort();
         break;
+      case 'saveBody':
+        this.saveBodyToFile(msg.payload as { body: string; mimeType: string });
+        break;
     }
+  }
+
+  private async saveBodyToFile(payload: { body: string; mimeType: string }): Promise<void> {
+    const ext = (payload.mimeType ?? '').includes('json') ? 'json' : 'txt';
+    const defaultUri = vscode.Uri.joinPath(
+      vscode.workspace.workspaceFolders?.[0]?.uri ?? vscode.Uri.file('/'),
+      `response.${ext}`,
+    );
+    const uri = await vscode.window.showSaveDialog({
+      defaultUri,
+      filters: { 'JSON': ['json'], 'Text': ['txt'], 'All Files': ['*'] },
+    });
+    if (!uri) return;
+    await vscode.workspace.fs.writeFile(uri, Buffer.from(payload.body, 'utf-8'));
   }
 
   private async executeSend(payload: SendRequestPayload): Promise<void> {
@@ -626,6 +643,258 @@ table.kv-table tbody td:last-child  { text-align: center; }
   color: var(--vscode-editor-foreground);
   overflow: auto;
 }
+
+/* ── Export dropdown ───────────────────────────────────────── */
+.export-dropdown {
+  position: relative;
+}
+.export-btn {
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  border: none;
+  border-radius: 3px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.export-btn:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+.export-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: var(--vscode-menu-background, var(--vscode-editor-background));
+  border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
+  border-radius: 4px;
+  padding: 4px 0;
+  z-index: 100;
+  min-width: 190px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.3);
+}
+.export-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--vscode-menu-foreground, var(--vscode-editor-foreground));
+  cursor: pointer;
+}
+.export-menu button:hover {
+  background: var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground));
+}
+
+/* ── Response viewer tabs ──────────────────────────────────── */
+.res-tab-bar {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+.res-tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--vscode-tab-inactiveForeground, var(--vscode-foreground));
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-bottom: -1px;
+  white-space: nowrap;
+}
+.res-tab-btn:hover { color: var(--vscode-tab-activeForeground, var(--vscode-foreground)); }
+.res-tab-btn.active {
+  color: var(--vscode-tab-activeForeground, var(--vscode-foreground));
+  border-bottom-color: var(--vscode-focusBorder, #007acc);
+}
+.res-tab-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.res-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  min-height: 120px;
+}
+.res-pane[hidden] { display: none; }
+
+.toggle-btn {
+  background: none;
+  border: 1px solid var(--vscode-panel-border);
+  color: var(--vscode-descriptionForeground);
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.toggle-btn:hover { color: var(--vscode-editor-foreground); }
+.toggle-btn.active {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border-color: var(--vscode-button-background);
+}
+
+.json-warn {
+  font-size: 11px;
+  color: var(--vscode-editorWarning-foreground, #cca700);
+}
+
+.res-save-btn {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--vscode-panel-border);
+  color: var(--vscode-descriptionForeground);
+  border-radius: 3px;
+  padding: 2px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.res-save-btn:hover {
+  color: var(--vscode-editor-foreground);
+  border-color: var(--vscode-focusBorder);
+}
+.res-save-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* JSON syntax tokens */
+.json-key  { color: #9cdcfe; }
+.json-str  { color: #ce9178; }
+.json-num  { color: #b5cea8; }
+.json-bool { color: #569cd6; }
+.json-null { color: #569cd6; opacity: .7; }
+
+/* Response headers table */
+.res-headers-table thead th:first-child { width: 220px; }
+
+/* ── History panel ─────────────────────────────────────────── */
+.history-toggle-btn {
+  background: none;
+  border: 1px solid var(--vscode-panel-border);
+  color: var(--vscode-descriptionForeground);
+  border-radius: 3px;
+  padding: 2px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.history-toggle-btn:hover { color: var(--vscode-editor-foreground); }
+.history-toggle-btn.active {
+  color: var(--vscode-editor-foreground);
+  border-color: var(--vscode-focusBorder);
+  background: var(--vscode-list-activeSelectionBackground, rgba(255,255,255,.05));
+}
+
+.history-panel {
+  flex-shrink: 0;
+  border-bottom: 2px solid var(--vscode-panel-border);
+  background: var(--vscode-sideBar-background, var(--vscode-editor-background));
+  max-height: 240px;
+  display: flex;
+  flex-direction: column;
+}
+.history-panel[hidden] { display: none; }
+
+.history-header {
+  display: flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  flex-shrink: 0;
+}
+.history-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--vscode-descriptionForeground);
+}
+.history-clear-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--vscode-descriptionForeground);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+.history-clear-btn:hover {
+  color: var(--vscode-errorForeground);
+  background: var(--vscode-inputValidation-errorBackground);
+}
+.history-list { overflow-y: auto; flex: 1; }
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+.history-item:last-child { border-bottom: none; }
+.history-item:hover { background: var(--vscode-list-hoverBackground); }
+.hist-method {
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 56px;
+  text-align: right;
+}
+.hist-method.GET    { color: #61affe; }
+.hist-method.POST   { color: #49cc90; }
+.hist-method.PUT    { color: #fca130; }
+.hist-method.DELETE { color: #f93e3e; }
+.hist-method.PATCH  { color: #50e3c2; }
+.hist-url {
+  flex: 1;
+  color: var(--vscode-editor-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 11px;
+}
+.hist-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+  min-width: 36px;
+  text-align: center;
+}
+.hist-time {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  white-space: nowrap;
+  min-width: 50px;
+  text-align: right;
+}
+.history-empty {
+  padding: 14px 12px;
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+}
+
+/* ── Response cookies indicator ────────────────────────────── */
+.res-cookies {
+  padding: 5px 12px;
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  flex-shrink: 0;
+}
+.res-cookies span {
+  color: var(--vscode-editor-foreground);
+  font-family: var(--vscode-editor-font-family, monospace);
+}
 `;
 
 const HTML = `
@@ -640,6 +909,17 @@ const HTML = `
   <input type="text" class="url-input" id="url-input" placeholder="https://example.com/api/..." />
   <button class="send-btn" id="send-btn">전송</button>
   <button class="cancel-btn" id="cancel-btn" hidden>취소</button>
+  <div class="export-dropdown" id="export-dropdown">
+    <button class="export-btn" id="export-btn">내보내기 ▾</button>
+    <div class="export-menu" id="export-menu" hidden>
+      <button data-fmt="curl">cURL 복사</button>
+      <button data-fmt="fetch">fetch 스니펫 복사</button>
+      <button data-fmt="axios">axios 스니펫 복사</button>
+      <button data-fmt="python">Python requests 스니펫 복사</button>
+      <button data-fmt="java">Java 11+ HttpClient 스니펫 복사</button>
+      <button data-fmt="java8">Java 8 Apache HttpClient 스니펫 복사</button>
+    </div>
+  </div>
 </div>
 
 <div class="settings-bar">
@@ -662,6 +942,18 @@ const HTML = `
     HTTPS
     <input type="text" class="setting-text" id="proxy-https" placeholder="http://host:port">
   </label>
+  <div class="setting-sep"></div>
+  <button class="history-toggle-btn" id="history-toggle-btn">기록</button>
+</div>
+
+<div class="history-panel" id="history-panel" hidden>
+  <div class="history-header">
+    <span class="history-title">요청 기록</span>
+    <button class="history-clear-btn" id="history-clear-btn">전체 삭제</button>
+  </div>
+  <div class="history-list" id="history-list">
+    <p class="history-empty">기록이 없습니다.</p>
+  </div>
 </div>
 
 <div class="main-scroll">
@@ -678,10 +970,14 @@ const HTML = `
   <button class="tab-btn" data-tab="auth">
     Auth <span class="badge" id="badge-auth"></span>
   </button>
+  <button class="tab-btn" data-tab="cookies">
+    Cookies <span class="badge" id="badge-cookies"></span>
+  </button>
   <div class="tab-bar-actions">
     <button class="tab-action-btn visible" id="add-param"><span class="plus">+</span> 추가</button>
     <button class="tab-action-btn" id="add-header"><span class="plus">+</span> 추가</button>
     <button class="tab-action-btn" id="add-body-field"><span class="plus">+</span> 추가</button>
+    <button class="tab-action-btn" id="add-cookie"><span class="plus">+</span> 추가</button>
   </div>
 </div>
 
@@ -751,7 +1047,7 @@ const HTML = `
     </div>
   </div>
 
-  <!-- Auth -->
+  <!-- Auth (hidden by default) -->
   <div class="tab-pane" id="tab-auth" hidden>
     <div class="auth-form">
       <div class="auth-field">
@@ -771,6 +1067,18 @@ const HTML = `
       <p class="auth-none-hint" id="auth-none-hint">인증 없음. 유형을 선택하세요.</p>
     </div>
   </div>
+
+  <!-- Cookies -->
+  <div class="tab-pane" id="tab-cookies" hidden>
+    <div class="kv-table-container">
+      <table class="kv-table">
+        <thead>
+          <tr><th></th><th>Name</th><th>Value</th><th>Domain</th><th></th></tr>
+        </thead>
+        <tbody id="cookies-tbody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <div class="response-area" id="response-area" hidden>
@@ -779,9 +1087,30 @@ const HTML = `
     <span class="res-status" id="res-status"></span>
     <span class="res-meta-item" id="res-time"></span>
     <span class="res-meta-item" id="res-size"></span>
+    <button class="res-save-btn" id="res-save-btn" disabled>저장</button>
   </div>
   <div class="redirect-chain" id="redirect-chain" hidden></div>
-  <pre class="response-body-pre" id="response-body-pre"></pre>
+  <div class="res-cookies" id="res-cookies" hidden></div>
+  <div class="res-tab-bar">
+    <button class="res-tab-btn active" data-res-tab="body">Body</button>
+    <button class="res-tab-btn" data-res-tab="headers">Headers</button>
+    <div class="res-tab-actions" id="res-body-actions">
+      <span class="json-warn" id="json-warn" hidden>⚠ JSON 파싱 오류</span>
+      <button class="toggle-btn active" id="pretty-btn">Pretty</button>
+      <button class="toggle-btn" id="raw-btn">Raw</button>
+    </div>
+  </div>
+  <div class="res-pane" id="res-pane-body">
+    <pre class="response-body-pre" id="response-body-pre"></pre>
+  </div>
+  <div class="res-pane" id="res-pane-headers" hidden>
+    <div class="kv-table-container">
+      <table class="kv-table res-headers-table">
+        <thead><tr><th>Name</th><th>Value</th></tr></thead>
+        <tbody id="res-headers-tbody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 </div>
 `;
@@ -827,6 +1156,12 @@ const state = {
   _nextId: 1,
 };
 
+const cookieJar = []; // { id, name, value, domain, path, enabled }
+const MAX_HISTORY = 50;
+const reqHistory = []; // { id, ts, method, url, params, headers, body, auth, res }
+let currentBodyRaw = '';
+let currentBodyMime = '';
+
 function nextId() {
   return state._nextId++;
 }
@@ -855,6 +1190,7 @@ function switchTab(tab) {
     'visible',
     tab === 'body' && (bodyType === 'form-data' || bodyType === 'urlencoded')
   );
+  document.getElementById('add-cookie').classList.toggle('visible', tab === 'cookies');
 }
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -873,10 +1209,6 @@ document.getElementById('url-input').addEventListener('input', e => {
   state.url = e.target.value;
 });
 
-/* ── Send button (placeholder) ─────────────────────────────── */
-document.getElementById('send-btn').addEventListener('click', () => {
-  // Phase 1 요청 전송 - 다음 단계에서 구현
-});
 
 /* ── Badge 업데이트 ────────────────────────────────────────── */
 function updateBadges() {
@@ -888,6 +1220,7 @@ function updateBadges() {
   setBadge('headers', userHeaders.length + managedHeaders.length);
   setBadge('body', state.body.type !== 'none' ? 1 : 0);
   setBadge('auth', state.auth.type !== 'none' ? 1 : 0);
+  setBadge('cookies', cookieJar.filter(c => c.enabled && c.name).length);
 }
 
 function setBadge(tab, count) {
@@ -1137,11 +1470,311 @@ authTokenInput.addEventListener('input', () => {
   updateAuthorizationHeader(state.auth.type, state.auth.token);
 });
 
+/* ── 히스토리 ──────────────────────────────────────────────── */
+function formatTimeAgo(ts) {
+  const d = Date.now() - ts;
+  if (d < 60000) return '방금 전';
+  if (d < 3600000) return Math.floor(d / 60000) + '분 전';
+  if (d < 86400000) return Math.floor(d / 3600000) + '시간 전';
+  return Math.floor(d / 86400000) + '일 전';
+}
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  if (!reqHistory.length) {
+    list.innerHTML = '<p class="history-empty">기록이 없습니다.</p>';
+    return;
+  }
+  list.innerHTML = '';
+  reqHistory.forEach(entry => {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+
+    const mSpan = document.createElement('span');
+    mSpan.className = 'hist-method ' + entry.method;
+    mSpan.textContent = entry.method;
+
+    const uSpan = document.createElement('span');
+    uSpan.className = 'hist-url';
+    uSpan.title = entry.url;
+    uSpan.textContent = entry.url;
+
+    const tSpan = document.createElement('span');
+    tSpan.className = 'hist-time';
+    tSpan.textContent = formatTimeAgo(entry.ts);
+
+    item.append(mSpan, uSpan);
+
+    if (entry.res) {
+      const sSpan = document.createElement('span');
+      sSpan.className = 'hist-status ' + statusClass(entry.res.status);
+      sSpan.textContent = String(entry.res.status);
+      item.appendChild(sSpan);
+    }
+
+    item.appendChild(tSpan);
+    item.addEventListener('click', () => restoreHistory(entry));
+    list.appendChild(item);
+  });
+}
+
+function saveToHistory(res) {
+  reqHistory.unshift({
+    id: nextId(),
+    ts: Date.now(),
+    method: state.method,
+    url: state.url,
+    params: JSON.parse(JSON.stringify(state.params)),
+    headers: JSON.parse(JSON.stringify(state.headers.filter(h => !h.managed))),
+    body: JSON.parse(JSON.stringify(state.body)),
+    auth: JSON.parse(JSON.stringify(state.auth)),
+    res: res ? { status: res.status, statusText: res.statusText, duration: res.duration, size: res.size } : null,
+  });
+  if (reqHistory.length > MAX_HISTORY) reqHistory.length = MAX_HISTORY;
+  renderHistory();
+}
+
+function restoreHistory(entry) {
+  state.method = entry.method;
+  const methodSel = document.getElementById('method-select');
+  methodSel.value = entry.method;
+  methodSel.className = 'method-select ' + entry.method;
+
+  state.url = entry.url;
+  document.getElementById('url-input').value = entry.url;
+
+  state.params = JSON.parse(JSON.stringify(entry.params));
+  renderParams();
+
+  const managed = state.headers.filter(h => h.managed);
+  state.headers = [...managed, ...JSON.parse(JSON.stringify(entry.headers))];
+
+  state.auth = JSON.parse(JSON.stringify(entry.auth));
+  const authSel = document.getElementById('auth-type-select');
+  authSel.value = entry.auth.type;
+  document.getElementById('auth-bearer-section').hidden = entry.auth.type !== 'bearer';
+  document.getElementById('auth-none-hint').hidden = entry.auth.type !== 'none';
+  document.getElementById('auth-token-input').value = entry.auth.token;
+  updateAuthorizationHeader(entry.auth.type, entry.auth.token);
+
+  state.body = JSON.parse(JSON.stringify(entry.body));
+  const radio = document.querySelector('input[name="body-type"][value="' + entry.body.type + '"]');
+  if (radio) radio.checked = true;
+  switchBodyEditor(entry.body.type);
+  document.getElementById('body-json-textarea').value = entry.body.json;
+  updateContentTypeHeader(entry.body.type);
+  renderFormData();
+  renderUrlEncoded();
+
+  renderHeaders();
+  updateBadges();
+
+  document.getElementById('history-panel').hidden = true;
+  document.getElementById('history-toggle-btn').classList.remove('active');
+  switchTab('params');
+}
+
+document.getElementById('history-toggle-btn').addEventListener('click', () => {
+  const panel = document.getElementById('history-panel');
+  const btn = document.getElementById('history-toggle-btn');
+  panel.hidden = !panel.hidden;
+  btn.classList.toggle('active', !panel.hidden);
+});
+
+document.getElementById('history-clear-btn').addEventListener('click', () => {
+  reqHistory.length = 0;
+  renderHistory();
+});
+
+/* ── 응답 뷰어 탭 ───────────────────────────────────────────── */
+function switchResTab(tab) {
+  document.querySelectorAll('.res-tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.resTab === tab);
+  });
+  document.getElementById('res-pane-body').hidden = tab !== 'body';
+  document.getElementById('res-pane-headers').hidden = tab !== 'headers';
+  document.getElementById('res-body-actions').style.display = tab === 'body' ? 'flex' : 'none';
+}
+
+document.querySelectorAll('.res-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchResTab(btn.dataset.resTab));
+});
+
+/* ── Pretty / Raw 토글 ─────────────────────────────────────── */
+let isPretty = true;
+
+function applyBodyView() {
+  const pre = document.getElementById('response-body-pre');
+  const warn = document.getElementById('json-warn');
+  if (isPretty) {
+    const looksJson = currentBodyRaw.trimStart().startsWith('{') || currentBodyRaw.trimStart().startsWith('[');
+    if (looksJson) {
+      try {
+        const formatted = JSON.stringify(JSON.parse(currentBodyRaw), null, 2);
+        warn.hidden = true;
+        pre.innerHTML = highlightJson(formatted);
+        return;
+      } catch {
+        warn.hidden = false;
+      }
+    } else {
+      warn.hidden = true;
+    }
+  }
+  pre.textContent = currentBodyRaw;
+}
+
+function highlightJson(text) {
+  const esc = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return esc.replace(
+    /("(?:[^"\\\\]|\\\\.)*"(?:\\s*:)?|true|false|null|-?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)/g,
+    match => {
+      if (match.endsWith(':')) {
+        return '<span class="json-key">' + match.slice(0, -1) + '</span>:';
+      }
+      if (match.startsWith('"')) return '<span class="json-str">' + match + '</span>';
+      if (match === 'true' || match === 'false') return '<span class="json-bool">' + match + '</span>';
+      if (match === 'null') return '<span class="json-null">' + match + '</span>';
+      return '<span class="json-num">' + match + '</span>';
+    }
+  );
+}
+
+document.getElementById('pretty-btn').addEventListener('click', () => {
+  isPretty = true;
+  document.getElementById('pretty-btn').classList.add('active');
+  document.getElementById('raw-btn').classList.remove('active');
+  applyBodyView();
+});
+
+document.getElementById('raw-btn').addEventListener('click', () => {
+  isPretty = false;
+  document.getElementById('raw-btn').classList.add('active');
+  document.getElementById('pretty-btn').classList.remove('active');
+  applyBodyView();
+});
+
+/* ── 응답 body 저장 ────────────────────────────────────────── */
+document.getElementById('res-save-btn').addEventListener('click', () => {
+  if (!currentBodyRaw) return;
+  vscode.postMessage({ type: 'saveBody', payload: { body: currentBodyRaw, mimeType: currentBodyMime } });
+});
+
+/* ── Cookies ───────────────────────────────────────────────── */
+function renderCookies() {
+  const tbody = document.getElementById('cookies-tbody');
+  tbody.innerHTML = '';
+
+  cookieJar.forEach(item => {
+    const tr = document.createElement('tr');
+
+    const tdCheck = document.createElement('td');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'kv-checkbox';
+    checkbox.checked = item.enabled;
+    checkbox.addEventListener('change', () => { item.enabled = checkbox.checked; updateBadges(); });
+    tdCheck.appendChild(checkbox);
+
+    const tdName = document.createElement('td');
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'kv-input';
+    nameInput.placeholder = 'Name';
+    nameInput.value = item.name;
+    nameInput.addEventListener('input', () => { item.name = nameInput.value; updateBadges(); });
+    tdName.appendChild(nameInput);
+
+    const tdVal = document.createElement('td');
+    const valInput = document.createElement('input');
+    valInput.type = 'text';
+    valInput.className = 'kv-input';
+    valInput.placeholder = 'Value';
+    valInput.value = item.value;
+    valInput.addEventListener('input', () => { item.value = valInput.value; });
+    tdVal.appendChild(valInput);
+
+    const tdDomain = document.createElement('td');
+    const domainInput = document.createElement('input');
+    domainInput.type = 'text';
+    domainInput.className = 'kv-input';
+    domainInput.placeholder = 'Domain';
+    domainInput.value = item.domain;
+    domainInput.addEventListener('input', () => { item.domain = domainInput.value; });
+    tdDomain.appendChild(domainInput);
+
+    const tdDel = document.createElement('td');
+    const delBtn = document.createElement('button');
+    delBtn.className = 'del-btn';
+    delBtn.textContent = '×';
+    delBtn.title = '삭제';
+    delBtn.addEventListener('click', () => {
+      const idx = cookieJar.indexOf(item);
+      if (idx >= 0) cookieJar.splice(idx, 1);
+      renderCookies();
+      updateBadges();
+    });
+    tdDel.appendChild(delBtn);
+
+    tr.append(tdCheck, tdName, tdVal, tdDomain, tdDel);
+    tbody.appendChild(tr);
+  });
+
+  updateBadges();
+}
+
+function mergeCookies(setCookies) {
+  for (const cookie of setCookies) {
+    if (!cookie.name) continue;
+    const existing = cookieJar.find(c => c.name === cookie.name && c.domain === cookie.domain);
+    if (existing) {
+      existing.value = cookie.value;
+    } else {
+      cookieJar.push({
+        id: nextId(),
+        name: cookie.name,
+        value: cookie.value,
+        domain: cookie.domain,
+        path: cookie.path,
+        enabled: true,
+      });
+    }
+  }
+  renderCookies();
+}
+
+function collectCookies(urlStr) {
+  if (!cookieJar.length) return {};
+  let hostname = '';
+  let pathname = '/';
+  try {
+    const u = new URL(urlStr);
+    hostname = u.hostname;
+    pathname = u.pathname;
+  } catch { return {}; }
+
+  const result = {};
+  for (const c of cookieJar) {
+    if (!c.enabled || !c.name) continue;
+    const domain = c.domain ? c.domain.replace(/^\./, '') : '';
+    if (domain && !hostname.endsWith(domain)) continue;
+    if (!pathname.startsWith(c.path || '/')) continue;
+    result[c.name] = c.value;
+  }
+  return result;
+}
+
+document.getElementById('add-cookie').addEventListener('click', () => {
+  cookieJar.push({ id: nextId(), name: '', value: '', domain: '', path: '/', enabled: true });
+  renderCookies();
+});
+
 /* ── 초기화 ────────────────────────────────────────────────── */
 renderParams();
 renderHeaders();
 renderFormData();
 renderUrlEncoded();
+renderCookies();
 updateBadges();
 
 /* ── 요청 전송 ─────────────────────────────────────────────── */
@@ -1219,6 +1852,8 @@ function sendRequest() {
 
   setSending(true);
 
+  const cookies = collectCookies(url);
+
   vscode.postMessage({
     type: 'sendRequest',
     payload: {
@@ -1226,6 +1861,7 @@ function sendRequest() {
       url,
       headers,
       body,
+      cookies: Object.keys(cookies).length ? cookies : undefined,
       timeout: settings.timeout,
       sslIgnore: settings.sslIgnore,
       proxyHttp: settings.proxyHttp || undefined,
@@ -1297,13 +1933,47 @@ function showResponse(res) {
     chainEl.hidden = true;
   }
 
-  const bodyEl = document.getElementById('response-body-pre');
-  let bodyText = res.body;
-  const ct = (res.headers && res.headers['content-type']) || '';
-  if (ct.includes('application/json') || (bodyText.trimStart().startsWith('{') || bodyText.trimStart().startsWith('['))) {
-    try { bodyText = JSON.stringify(JSON.parse(bodyText), null, 2); } catch { /* keep */ }
+  const cookiesEl = document.getElementById('res-cookies');
+  if (res.setCookies && res.setCookies.length) {
+    cookiesEl.hidden = false;
+    cookiesEl.innerHTML = '쿠키 수신: ' +
+      res.setCookies.map(c => '<span>' + escHtml(c.name) + '=' + escHtml(c.value) + '</span>').join(', ');
+    mergeCookies(res.setCookies);
+  } else {
+    cookiesEl.hidden = true;
   }
-  bodyEl.textContent = bodyText;
+
+  // 응답 헤더 테이블
+  const headersTbody = document.getElementById('res-headers-tbody');
+  headersTbody.innerHTML = '';
+  if (res.headers) {
+    Object.entries(res.headers).forEach(([k, v]) => {
+      const tr = document.createElement('tr');
+      const tdK = document.createElement('td');
+      tdK.className = 'kv-input';
+      tdK.style.cssText = 'padding:3px 8px; font-size:12px; font-family:var(--vscode-editor-font-family,monospace);';
+      tdK.textContent = k;
+      const tdV = document.createElement('td');
+      tdV.style.cssText = 'padding:3px 8px; font-size:12px; word-break:break-all;';
+      tdV.textContent = v;
+      tr.append(tdK, tdV);
+      headersTbody.appendChild(tr);
+    });
+  }
+
+  // body 상태 업데이트
+  currentBodyRaw = res.body ?? '';
+  currentBodyMime = (res.headers && res.headers['content-type']) || '';
+
+  isPretty = true;
+  document.getElementById('pretty-btn').classList.add('active');
+  document.getElementById('raw-btn').classList.remove('active');
+  applyBodyView();
+
+  document.getElementById('res-save-btn').disabled = !currentBodyRaw;
+
+  switchResTab('body');
+  saveToHistory(res);
 }
 
 function showError(message) {
@@ -1319,7 +1989,15 @@ function showError(message) {
   document.getElementById('res-time').innerHTML = '';
   document.getElementById('res-size').innerHTML = '';
   document.getElementById('redirect-chain').hidden = true;
+  document.getElementById('res-cookies').hidden = true;
+  document.getElementById('json-warn').hidden = true;
+  document.getElementById('res-save-btn').disabled = true;
+  document.getElementById('res-headers-tbody').innerHTML = '';
+  currentBodyRaw = message;
+  currentBodyMime = '';
   document.getElementById('response-body-pre').textContent = message;
+  switchResTab('body');
+  saveToHistory(null);
 }
 
 window.addEventListener('message', event => {
@@ -1329,5 +2007,193 @@ window.addEventListener('message', event => {
   } else if (msg.type === 'requestError') {
     showError(msg.payload.message);
   }
+});
+
+/* ── 요청 내보내기 ─────────────────────────────────────────── */
+function buildCurl(url, headers, body) {
+  const lines = ['curl'];
+  if (state.method !== 'GET') lines.push(\`-X \${state.method}\`);
+  if (settings.sslIgnore) lines.push('-k');
+  for (const [k, v] of Object.entries(headers)) {
+    lines.push(\`-H \${JSON.stringify(k + ': ' + v)}\`);
+  }
+  if (body) lines.push(\`-d \${JSON.stringify(body)}\`);
+  lines.push(JSON.stringify(url));
+  return lines.join(' \\\\\\n  ');
+}
+
+function buildFetch(url, headers, body) {
+  const opts = { method: state.method };
+  if (Object.keys(headers).length) opts.headers = headers;
+  if (body) opts.body = body;
+  return \`fetch(\${JSON.stringify(url)}, \${JSON.stringify(opts, null, 2)})
+  .then(res => res.json())
+  .then(console.log)
+  .catch(console.error);\`;
+}
+
+function buildAxios(url, headers, body) {
+  const config = { method: state.method.toLowerCase(), url };
+  if (Object.keys(headers).length) config.headers = headers;
+  if (body) {
+    try { config.data = JSON.parse(body); } catch { config.data = body; }
+  }
+  return \`import axios from 'axios';
+
+axios(\${JSON.stringify(config, null, 2)})
+  .then(res => console.log(res.data))
+  .catch(console.error);\`;
+}
+
+function buildPython(url, headers, body) {
+  const lines = ['import requests', ''];
+  const hasHeaders = Object.keys(headers).length > 0;
+  if (hasHeaders) {
+    lines.push(\`headers = \${JSON.stringify(headers, null, 4)}\`, '');
+  }
+  const method = state.method.toLowerCase();
+  const headersArg = hasHeaders ? '\\n    headers=headers,' : '';
+  let dataArg = '';
+  if (body) {
+    const ct = (headers['content-type'] || headers['Content-Type'] || '').toLowerCase();
+    if (ct.includes('application/json')) {
+      lines.splice(1, 0, 'import json');
+      dataArg = \`\\n    json=json.loads(\${JSON.stringify(body)}),\`;
+    } else {
+      dataArg = \`\\n    data=\${JSON.stringify(body)},\`;
+    }
+  }
+  lines.push(\`response = requests.\${method}(\${JSON.stringify(url)},\${headersArg}\${dataArg}\\n)\`);
+  lines.push('print(response.status_code)');
+  lines.push('print(response.json())');
+  return lines.join('\\n');
+}
+
+function buildJava(url, headers, body) {
+  const lines = [
+    'import java.net.URI;',
+    'import java.net.http.HttpClient;',
+    'import java.net.http.HttpRequest;',
+    'import java.net.http.HttpResponse;',
+    '',
+    'HttpClient client = HttpClient.newHttpClient();',
+    '',
+  ];
+
+  const builderLines = [\`HttpRequest request = HttpRequest.newBuilder()\`];
+  builderLines.push(\`    .uri(URI.create(\${JSON.stringify(url)}))\`);
+
+  for (const [k, v] of Object.entries(headers)) {
+    builderLines.push(\`    .header(\${JSON.stringify(k)}, \${JSON.stringify(v)})\`);
+  }
+
+  if (body) {
+    builderLines.push(\`    .method(\${JSON.stringify(state.method)}, HttpRequest.BodyPublishers.ofString(\${JSON.stringify(body)}))\`);
+  } else if (state.method === 'GET' || state.method === 'DELETE') {
+    builderLines.push(\`    .\${state.method.charAt(0) + state.method.slice(1).toLowerCase()}()\`);
+  } else {
+    builderLines.push(\`    .method(\${JSON.stringify(state.method)}, HttpRequest.BodyPublishers.noBody())\`);
+  }
+
+  builderLines.push('    .build();');
+  lines.push(builderLines.join('\\n'));
+  lines.push('');
+  lines.push('HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());');
+  lines.push('System.out.println(response.statusCode());');
+  lines.push('System.out.println(response.body());');
+  return lines.join('\\n');
+}
+
+function buildJava8(url, headers, body) {
+  const method = state.method;
+  const methodClass = {
+    GET: 'HttpGet', POST: 'HttpPost', PUT: 'HttpPut',
+    DELETE: 'HttpDelete', PATCH: 'HttpPatch',
+  }[method] || \`Http\${method.charAt(0) + method.slice(1).toLowerCase()}\`;
+  const hasBody = body && ['POST', 'PUT', 'PATCH'].includes(method);
+
+  const lines = [
+    '// Apache HttpClient 4.x (Java 8+)',
+    '// Maven: org.apache.httpcomponents:httpclient:4.5.14',
+    '',
+    'import org.apache.http.client.methods.' + methodClass + ';',
+  ];
+  if (hasBody) {
+    lines.push('import org.apache.http.entity.StringEntity;');
+  }
+  lines.push(
+    'import org.apache.http.impl.client.CloseableHttpClient;',
+    'import org.apache.http.impl.client.HttpClients;',
+    'import org.apache.http.util.EntityUtils;',
+    '',
+    'CloseableHttpClient client = HttpClients.createDefault();',
+    \`\${methodClass} request = new \${methodClass}(\${JSON.stringify(url)});\`,
+  );
+
+  for (const [k, v] of Object.entries(headers)) {
+    lines.push(\`request.setHeader(\${JSON.stringify(k)}, \${JSON.stringify(v)});\`);
+  }
+
+  if (hasBody) {
+    lines.push(\`request.setEntity(new StringEntity(\${JSON.stringify(body)}, "UTF-8"));\`);
+  }
+
+  lines.push(
+    '',
+    'try (CloseableHttpResponse response = client.execute(request)) {',
+    '    System.out.println(response.getStatusLine().getStatusCode());',
+    '    System.out.println(EntityUtils.toString(response.getEntity()));',
+    '}',
+    'client.close();',
+  );
+  return lines.join('\\n');
+}
+
+function copyExport(fmt) {
+  const url = buildUrl();
+  if (!url) { document.getElementById('url-input').focus(); return; }
+
+  const { body, contentType } = collectBody();
+  const headers = collectHeaders();
+  if (contentType) headers['Content-Type'] = contentType;
+
+  let text;
+  switch (fmt) {
+    case 'curl':   text = buildCurl(url, headers, body);   break;
+    case 'fetch':  text = buildFetch(url, headers, body);  break;
+    case 'axios':  text = buildAxios(url, headers, body);  break;
+    case 'python': text = buildPython(url, headers, body); break;
+    case 'java':   text = buildJava(url, headers, body);   break;
+    case 'java8':  text = buildJava8(url, headers, body);  break;
+    default: return;
+  }
+
+  navigator.clipboard.writeText(text).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+}
+
+const exportBtn = document.getElementById('export-btn');
+const exportMenu = document.getElementById('export-menu');
+
+exportBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  exportMenu.hidden = !exportMenu.hidden;
+});
+
+exportMenu.querySelectorAll('button[data-fmt]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    copyExport(btn.dataset.fmt);
+    exportMenu.hidden = true;
+  });
+});
+
+document.addEventListener('click', () => {
+  exportMenu.hidden = true;
 });
 `;

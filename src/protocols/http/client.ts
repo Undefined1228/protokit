@@ -13,11 +13,21 @@ export interface HttpRequestOptions {
   sslIgnore: boolean;
   proxyHttp?: string;
   proxyHttps?: string;
+  cookies?: Record<string, string>;
 }
 
 export interface RedirectEntry {
   status: number;
   location: string;
+}
+
+export interface ParsedCookie {
+  name: string;
+  value: string;
+  domain: string;
+  path: string;
+  httpOnly: boolean;
+  secure: boolean;
 }
 
 export interface HttpResponse {
@@ -28,6 +38,7 @@ export interface HttpResponse {
   duration: number;
   size: number;
   redirectChain: RedirectEntry[];
+  setCookies: ParsedCookie[];
 }
 
 const STATUS_TEXT: Record<number, string> = {
@@ -75,7 +86,8 @@ async function doRequest(
 
   const isHttps = parsedUrl.protocol === 'https:';
   const proxyUrl = isHttps ? options.proxyHttps : options.proxyHttp;
-  const reqOptions = buildNodeOptions(parsedUrl, options, proxyUrl);
+  const headersWithCookies = injectCookies(options.headers, options.cookies);
+  const reqOptions = buildNodeOptions(parsedUrl, { ...options, headers: headersWithCookies }, proxyUrl);
   const transport = isHttps && !proxyUrl ? https : http;
 
   return new Promise<HttpResponse>((resolve, reject) => {
@@ -126,12 +138,20 @@ async function doRequest(
         });
         res.on('end', () => {
           const buf = Buffer.concat(chunks);
+          const rawSetCookie = res.headers['set-cookie'];
+          const setCookieList = rawSetCookie
+            ? (Array.isArray(rawSetCookie) ? rawSetCookie : [rawSetCookie])
+            : [];
           const headers: Record<string, string> = {};
           for (const [k, v] of Object.entries(res.headers)) {
-            if (v !== undefined) {
+            if (v !== undefined && k !== 'set-cookie') {
               headers[k.toLowerCase()] = Array.isArray(v) ? v.join(', ') : v;
             }
           }
+          if (setCookieList.length) {
+            headers['set-cookie'] = setCookieList.join('\n');
+          }
+          const setCookies = parseCookieHeaders(setCookieList, options.url);
           done(() => resolve({
             status,
             statusText: STATUS_TEXT[status] ?? '',
@@ -140,6 +160,7 @@ async function doRequest(
             duration: Date.now() - startTime,
             size: buf.length,
             redirectChain: [...redirectChain],
+            setCookies,
           }));
         });
         res.on('error', (e) => done(() => reject(e)));
@@ -267,4 +288,46 @@ function createHttpsProxyAgent(
   };
 
   return agent;
+}
+
+function injectCookies(
+  headers: Record<string, string>,
+  cookies?: Record<string, string>,
+): Record<string, string> {
+  if (!cookies || Object.keys(cookies).length === 0) return headers;
+  const cookieStr = Object.entries(cookies).map(([n, v]) => `${n}=${v}`).join('; ');
+  const existing = headers['cookie'] || headers['Cookie'] || '';
+  return { ...headers, cookie: existing ? existing + '; ' + cookieStr : cookieStr };
+}
+
+export function parseCookieHeaders(setCookieList: string[], requestUrl: string): ParsedCookie[] {
+  let hostname = '';
+  try { hostname = new URL(requestUrl).hostname; } catch { /* ignore */ }
+  return setCookieList.map(h => parseSingleCookie(h, hostname));
+}
+
+function parseSingleCookie(header: string, defaultDomain: string): ParsedCookie {
+  const parts = header.split(';').map(p => p.trim());
+  const first = parts[0] ?? '';
+  const eqIdx = first.indexOf('=');
+  const name = eqIdx >= 0 ? first.slice(0, eqIdx).trim() : first.trim();
+  const value = eqIdx >= 0 ? first.slice(eqIdx + 1).trim() : '';
+
+  let domain = defaultDomain;
+  let path = '/';
+  let httpOnly = false;
+  let secure = false;
+
+  for (const part of parts.slice(1)) {
+    const eqPos = part.indexOf('=');
+    const attrName = (eqPos >= 0 ? part.slice(0, eqPos) : part).trim().toLowerCase();
+    const attrVal = eqPos >= 0 ? part.slice(eqPos + 1).trim() : '';
+
+    if (attrName === 'domain' && attrVal) domain = attrVal.replace(/^\./, '');
+    else if (attrName === 'path' && attrVal) path = attrVal;
+    else if (attrName === 'httponly') httpOnly = true;
+    else if (attrName === 'secure') secure = true;
+  }
+
+  return { name, value, domain, path, httpOnly, secure };
 }

@@ -33,25 +33,25 @@
 
 ## Cookie
 
-- [ ] 요청/응답 쿠키 자동 관리
-- [ ] 쿠키 목록 조회 · 수동 편집 · 삭제
+- [x] 요청/응답 쿠키 자동 관리
+- [x] 쿠키 목록 조회 · 수동 편집 · 삭제
 
 ## 요청 내보내기
 
-- [ ] 현재 요청을 cURL 커맨드로 복사
-- [ ] 코드 스니펫 생성 (fetch, axios, Python requests)
+- [x] 현재 요청을 cURL 커맨드로 복사
+- [x] 코드 스니펫 생성 (fetch, axios, Python requests, Java 11+ HttpClient, Java 8 Apache HttpClient)
 
 ## 응답 뷰어
 
-- [ ] Status code / 응답 시간 / 응답 크기 표시
-- [ ] Body: JSON 포맷팅 + 구문 강조
-- [ ] Body: Pretty / Raw 토글
-- [ ] Body: 잘못된 JSON 경고
-- [ ] Headers: 응답 헤더 목록
-- [ ] 응답 body 파일로 저장
+- [x] Status code / 응답 시간 / 응답 크기 표시
+- [x] Body: JSON 포맷팅 + 구문 강조
+- [x] Body: Pretty / Raw 토글
+- [x] Body: 잘못된 JSON 경고
+- [x] Headers: 응답 헤더 목록
+- [x] 응답 body 파일로 저장
 
 ## 히스토리
 
-- [ ] 요청 전송 시 자동 저장
-- [ ] 최근 N건 목록 표시
-- [ ] 클릭 시 요청 편집기에 복원
+- [x] 요청 전송 시 자동 저장
+- [x] 최근 N건 목록 표시
+- [x] 클릭 시 요청 편집기에 복원
