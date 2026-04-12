@@ -24,6 +24,7 @@ export interface SavedRequest {
   authApiKeyKey?: string;
   authApiKeyValue?: string;
   authApiKeyIn?: string;
+  assertions?: Assertion[];
 }
 
 export interface Environment {
@@ -44,6 +45,15 @@ export interface Project {
   collections: Collection[];
   environments: Environment[];
   activeEnvironmentId: string | null;
+}
+
+export interface Assertion {
+  id?: string;
+  enabled: boolean;
+  type: 'status' | 'body_exists' | 'body_eq' | 'duration';
+  operator: string;
+  target: string;
+  value: string;
 }
 
 export interface HistoryEntry {

@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### 추가 — Phase 4: 응답 검증 & Collection Runner
+
+- **Assertions 탭**: 요청별 검증 조건 정의 (Status Code · Body 필드 존재/값 · 응답 시간)
+- 요청 전송 후 Assertions 결과 표시 (pass/fail) — 응답 뷰어 Assertions 탭
+- **Collection Runner**: 컬렉션 내 요청 순서대로 자동 실행 (컬렉션 우클릭 → 컬렉션 실행)
+- 실행 대시보드: 요청별 Status · 응답 시간 · Assertions 결과 실시간 표시
+- 실패한 요청 강조 표시 (빨간 행)
+- 실행 결과 JSON 내보내기
+
 ### 추가 — Phase 3: 인증 확장
 
 - Basic Auth: username / password 입력 → Base64 인코딩 후 `Authorization: Basic ...` 헤더 자동 삽입

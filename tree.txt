@@ -33,6 +33,7 @@
 ├── src
 │   ├── extension.ts
 │   ├── panels
+│   │   ├── CollectionRunnerPanel.ts
 │   │   └── RequestEditorPanel.ts
 │   ├── protocols
 │   │   └── http
@@ -45,4 +46,4 @@
 ├── tree.txt
 └── tsconfig.json
 
-11 directories, 35 files
+11 directories, 36 files

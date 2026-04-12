@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { RequestEditorPanel } from './panels/RequestEditorPanel';
+import { CollectionRunnerPanel } from './panels/CollectionRunnerPanel';
 import { ProtoKitStore } from './storage/store';
 import { CollectionTreeProvider, CollectionItem, RequestItem } from './providers/CollectionTreeProvider';
 import { HistoryTreeProvider, HistoryItem } from './providers/HistoryTreeProvider';
@@ -105,6 +106,10 @@ export function activate(context: vscode.ExtensionContext) {
       );
       if (confirmed !== '삭제') return;
       store.deleteCollection(item.projectId, item.collection.id);
+    }),
+
+    vscode.commands.registerCommand('protokit.runCollection', (item: CollectionItem) => {
+      CollectionRunnerPanel.create(context, store, item.projectId, item.collection.id);
     }),
 
     // ── 요청 ─────────────────────────────────────────────────

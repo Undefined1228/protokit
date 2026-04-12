@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { sendHttpRequest, type HttpRequestOptions } from '../protocols/http/client';
-import type { ProtoKitStore, SavedRequest } from '../storage/store';
+import type { ProtoKitStore, SavedRequest, Assertion } from '../storage/store';
 
 interface KVRow {
   enabled: boolean;
@@ -41,6 +41,7 @@ interface SaveRequestPayload {
   authApiKeyKey: string;
   authApiKeyValue: string;
   authApiKeyIn: string;
+  assertions?: Omit<Assertion, 'id'>[];
 }
 
 export class RequestEditorPanel {
@@ -1089,6 +1090,73 @@ table.kv-table tbody td:last-child  { text-align: center; }
   color: var(--vscode-descriptionForeground);
 }
 
+/* ── Assertion selects ─────────────────────────────────────── */
+.assertion-select {
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid transparent;
+  border-radius: 2px;
+  padding: 3px 4px;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+  max-width: 150px;
+  width: 100%;
+}
+.assertion-select:focus { border-color: var(--vscode-focusBorder); }
+.assertion-select:disabled { color: var(--vscode-disabledForeground); cursor: default; }
+
+/* ── Assertion results ─────────────────────────────────────── */
+.assert-results {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: auto;
+}
+.assert-summary {
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  flex-shrink: 0;
+}
+.assert-summary.all-pass { color: #49cc90; }
+.assert-summary.some-fail { color: #f93e3e; }
+.assert-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+.assert-row:last-child { border-bottom: none; }
+.assert-icon { font-size: 13px; min-width: 14px; }
+.assert-row.pass .assert-icon { color: #49cc90; }
+.assert-row.fail .assert-icon { color: #f93e3e; }
+.assert-desc { flex: 1; font-family: var(--vscode-editor-font-family, monospace); }
+.assert-actual {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+}
+.assert-empty {
+  padding: 16px 12px;
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+}
+.assert-res-badge {
+  font-size: 10px;
+  border-radius: 10px;
+  padding: 0 5px;
+  line-height: 16px;
+  margin-left: 4px;
+  display: none;
+}
+.assert-res-badge.visible { display: inline-block; }
+.assert-res-badge.pass { background: rgba(73,204,144,.2); color: #49cc90; }
+.assert-res-badge.fail { background: rgba(249,62,62,.2); color: #f93e3e; }
+
 /* ── Response cookies indicator ────────────────────────────── */
 .res-cookies {
   padding: 5px 12px;
@@ -1180,11 +1248,15 @@ const HTML = `
   <button class="tab-btn" data-tab="cookies">
     Cookies <span class="badge" id="badge-cookies"></span>
   </button>
+  <button class="tab-btn" data-tab="assertions">
+    Assertions <span class="badge" id="badge-assertions"></span>
+  </button>
   <div class="tab-bar-actions">
     <button class="tab-action-btn visible" id="add-param"><span class="plus">+</span> 추가</button>
     <button class="tab-action-btn" id="add-header"><span class="plus">+</span> 추가</button>
     <button class="tab-action-btn" id="add-body-field"><span class="plus">+</span> 추가</button>
     <button class="tab-action-btn" id="add-cookie"><span class="plus">+</span> 추가</button>
+    <button class="tab-action-btn" id="add-assertion"><span class="plus">+</span> 추가</button>
   </div>
 </div>
 
@@ -1317,6 +1389,18 @@ const HTML = `
       </table>
     </div>
   </div>
+
+  <!-- Assertions -->
+  <div class="tab-pane" id="tab-assertions" hidden>
+    <div class="kv-table-container">
+      <table class="kv-table">
+        <thead>
+          <tr><th></th><th>유형</th><th>경로</th><th>조건</th><th>값</th><th></th></tr>
+        </thead>
+        <tbody id="assertions-tbody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <div class="response-area" id="response-area" hidden>
@@ -1332,6 +1416,7 @@ const HTML = `
   <div class="res-tab-bar">
     <button class="res-tab-btn active" data-res-tab="body">Body</button>
     <button class="res-tab-btn" data-res-tab="headers">Headers</button>
+    <button class="res-tab-btn" data-res-tab="assertions">Assertions<span id="assert-res-badge" class="assert-res-badge"></span></button>
     <div class="res-tab-actions" id="res-body-actions">
       <span class="json-warn" id="json-warn" hidden>⚠ JSON 파싱 오류</span>
       <button class="toggle-btn active" id="pretty-btn">Pretty</button>
@@ -1347,6 +1432,11 @@ const HTML = `
         <thead><tr><th>Name</th><th>Value</th></tr></thead>
         <tbody id="res-headers-tbody"></tbody>
       </table>
+    </div>
+  </div>
+  <div class="res-pane" id="res-pane-assertions" hidden>
+    <div class="assert-results" id="assertion-results">
+      <p class="assert-empty">검증 조건을 추가하면 결과가 여기에 표시됩니다.</p>
     </div>
   </div>
 </div>
@@ -1410,6 +1500,7 @@ const state = {
 };
 
 const cookieJar = []; // { id, name, value, domain, path, enabled }
+const assertions = []; // { id, enabled, type, operator, target, value }
 const MAX_HISTORY = 50;
 const reqHistory = []; // { id, ts, method, url, params, headers, body, auth, res }
 let currentBodyRaw = '';
@@ -1444,6 +1535,7 @@ function switchTab(tab) {
     tab === 'body' && (bodyType === 'form-data' || bodyType === 'urlencoded')
   );
   document.getElementById('add-cookie').classList.toggle('visible', tab === 'cookies');
+  document.getElementById('add-assertion').classList.toggle('visible', tab === 'assertions');
 }
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1474,6 +1566,7 @@ function updateBadges() {
   setBadge('body', state.body.type !== 'none' ? 1 : 0);
   setBadge('auth', state.auth.type !== 'none' ? 1 : 0);
   setBadge('cookies', cookieJar.filter(c => c.enabled && c.name).length);
+  setBadge('assertions', assertions.filter(a => a.enabled).length);
 }
 
 function setBadge(tab, count) {
@@ -1916,6 +2009,7 @@ function switchResTab(tab) {
   });
   document.getElementById('res-pane-body').hidden = tab !== 'body';
   document.getElementById('res-pane-headers').hidden = tab !== 'headers';
+  document.getElementById('res-pane-assertions').hidden = tab !== 'assertions';
   document.getElementById('res-body-actions').style.display = tab === 'body' ? 'flex' : 'none';
 }
 
@@ -2092,12 +2186,198 @@ document.getElementById('add-cookie').addEventListener('click', () => {
   renderCookies();
 });
 
+/* ── Assertions ──────────────────────────────────────────────── */
+function renderAssertions() {
+  const tbody = document.getElementById('assertions-tbody');
+  tbody.innerHTML = '';
+  assertions.forEach(function(a) {
+    const tr = document.createElement('tr');
+
+    const tdCheck = document.createElement('td');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'kv-checkbox';
+    cb.checked = a.enabled;
+    cb.addEventListener('change', function() { a.enabled = cb.checked; updateBadges(); });
+    tdCheck.appendChild(cb);
+
+    const tdType = document.createElement('td');
+    const typeSelect = document.createElement('select');
+    typeSelect.className = 'assertion-select';
+    [['status','Status Code'],['body_exists','Body 필드 존재'],['body_eq','Body 필드 값'],['duration','응답 시간']].forEach(function(pair) {
+      const opt = document.createElement('option');
+      opt.value = pair[0]; opt.textContent = pair[1];
+      if (a.type === pair[0]) opt.selected = true;
+      typeSelect.appendChild(opt);
+    });
+    typeSelect.addEventListener('change', function() {
+      a.type = typeSelect.value;
+      if (a.type === 'body_exists') { a.operator = 'exists'; }
+      else if (a.operator === 'exists') { a.operator = '==='; }
+      renderAssertions();
+    });
+    tdType.appendChild(typeSelect);
+
+    const tdTarget = document.createElement('td');
+    const targetInput = document.createElement('input');
+    targetInput.type = 'text';
+    targetInput.className = 'kv-input';
+    targetInput.placeholder = 'user.id';
+    targetInput.value = a.target;
+    targetInput.disabled = a.type === 'status' || a.type === 'duration';
+    targetInput.addEventListener('input', function() { a.target = targetInput.value; });
+    tdTarget.appendChild(targetInput);
+
+    const tdOp = document.createElement('td');
+    const opSelect = document.createElement('select');
+    opSelect.className = 'assertion-select';
+    if (a.type === 'body_exists') {
+      const opt = document.createElement('option');
+      opt.value = 'exists'; opt.textContent = 'exists';
+      opSelect.appendChild(opt);
+      opSelect.disabled = true;
+    } else {
+      ['===','!==','<','<=','>','>='].forEach(function(op) {
+        const opt = document.createElement('option');
+        opt.value = op; opt.textContent = op;
+        if (a.operator === op) opt.selected = true;
+        opSelect.appendChild(opt);
+      });
+      opSelect.addEventListener('change', function() { a.operator = opSelect.value; });
+    }
+    tdOp.appendChild(opSelect);
+
+    const tdVal = document.createElement('td');
+    const valInput = document.createElement('input');
+    valInput.type = 'text';
+    valInput.className = 'kv-input';
+    valInput.placeholder = a.type === 'status' ? '200' : a.type === 'duration' ? '500' : '기대값';
+    valInput.value = a.value;
+    valInput.disabled = a.type === 'body_exists';
+    valInput.addEventListener('input', function() { a.value = valInput.value; });
+    tdVal.appendChild(valInput);
+
+    const tdDel = document.createElement('td');
+    const delBtn = document.createElement('button');
+    delBtn.className = 'del-btn';
+    delBtn.textContent = '×';
+    delBtn.title = '삭제';
+    delBtn.addEventListener('click', function() {
+      const idx = assertions.indexOf(a);
+      if (idx >= 0) assertions.splice(idx, 1);
+      renderAssertions();
+    });
+    tdDel.appendChild(delBtn);
+
+    tr.append(tdCheck, tdType, tdTarget, tdOp, tdVal, tdDel);
+    tbody.appendChild(tr);
+  });
+  updateBadges();
+}
+
+document.getElementById('add-assertion').addEventListener('click', function() {
+  assertions.push({ id: nextId(), enabled: true, type: 'status', operator: '===', target: '', value: '200' });
+  renderAssertions();
+});
+
+function getBodyPath(obj, path) {
+  if (obj === null || obj === undefined || !path) return undefined;
+  return path.split('.').reduce(function(o, k) {
+    return (o && typeof o === 'object' && k in o) ? o[k] : undefined;
+  }, obj);
+}
+
+function compareNum(actual, op, expected) {
+  if (op === '===') return actual === expected;
+  if (op === '!==') return actual !== expected;
+  if (op === '<') return actual < expected;
+  if (op === '<=') return actual <= expected;
+  if (op === '>') return actual > expected;
+  if (op === '>=') return actual >= expected;
+  return false;
+}
+
+function compareStr(actual, op, expected) {
+  if (op === '===') return actual === expected;
+  if (op === '!==') return actual !== expected;
+  return false;
+}
+
+function evaluateAssertions(res) {
+  var results = [];
+  var parsedBody = null;
+  try { parsedBody = JSON.parse(res.body || ''); } catch (e) {}
+
+  assertions.filter(function(a) { return a.enabled; }).forEach(function(a) {
+    var pass = false;
+    var actual = '';
+    var description = '';
+
+    if (a.type === 'status') {
+      var expected = parseInt(a.value, 10);
+      actual = String(res.status);
+      pass = compareNum(res.status, a.operator, expected);
+      description = 'Status ' + a.operator + ' ' + a.value;
+    } else if (a.type === 'body_exists') {
+      var val = getBodyPath(parsedBody, a.target);
+      actual = val === undefined ? 'undefined' : JSON.stringify(val);
+      pass = val !== undefined && val !== null;
+      description = 'body.' + a.target + ' exists';
+    } else if (a.type === 'body_eq') {
+      var val2 = getBodyPath(parsedBody, a.target);
+      actual = val2 === undefined ? 'undefined' : String(val2);
+      pass = compareStr(val2 !== undefined ? String(val2) : '', a.operator, a.value);
+      description = 'body.' + a.target + ' ' + a.operator + ' "' + a.value + '"';
+    } else if (a.type === 'duration') {
+      var exp2 = parseInt(a.value, 10);
+      actual = String(res.duration) + 'ms';
+      pass = compareNum(res.duration, a.operator, exp2);
+      description = '응답 시간 ' + a.operator + ' ' + a.value + 'ms';
+    }
+
+    results.push({ pass: pass, actual: actual, description: description });
+  });
+  return results;
+}
+
+function showAssertionResults(results) {
+  var container = document.getElementById('assertion-results');
+  var badge = document.getElementById('assert-res-badge');
+
+  if (!results.length) {
+    container.innerHTML = '<p class="assert-empty">검증 조건을 추가하면 결과가 여기에 표시됩니다.</p>';
+    badge.className = 'assert-res-badge';
+    return;
+  }
+
+  var passed = results.filter(function(r) { return r.pass; }).length;
+  var total = results.length;
+  var failed = total - passed;
+
+  var html = '<div class="assert-summary ' + (failed > 0 ? 'some-fail' : 'all-pass') + '">' +
+    (failed > 0 ? '✗ ' + failed + '개 실패  ·  ' : '✓ ') + passed + '/' + total + ' 통과</div>';
+
+  results.forEach(function(r) {
+    html += '<div class="assert-row ' + (r.pass ? 'pass' : 'fail') + '">' +
+      '<span class="assert-icon">' + (r.pass ? '✓' : '✗') + '</span>' +
+      '<span class="assert-desc">' + escHtml(r.description) + '</span>' +
+      '<span class="assert-actual">실제: ' + escHtml(r.actual) + '</span>' +
+      '</div>';
+  });
+
+  container.innerHTML = html;
+
+  badge.className = 'assert-res-badge visible ' + (failed > 0 ? 'fail' : 'pass');
+  badge.textContent = failed > 0 ? failed + ' 실패' : passed + '/' + total;
+}
+
 /* ── 초기화 ────────────────────────────────────────────────── */
 renderParams();
 renderHeaders();
 renderFormData();
 renderUrlEncoded();
 renderCookies();
+renderAssertions();
 updateBadges();
 vscode.postMessage({ type: 'ready' });
 
@@ -2315,6 +2595,9 @@ function showResponse(res) {
 
   document.getElementById('res-save-btn').disabled = !currentBodyRaw;
 
+  const assertResults = evaluateAssertions(res);
+  showAssertionResults(assertResults);
+
   switchResTab('body');
   saveToHistory(res);
 }
@@ -2336,6 +2619,8 @@ function showError(message) {
   document.getElementById('json-warn').hidden = true;
   document.getElementById('res-save-btn').disabled = true;
   document.getElementById('res-headers-tbody').innerHTML = '';
+  document.getElementById('assertion-results').innerHTML = '<p class="assert-empty">요청 오류로 검증을 실행할 수 없습니다.</p>';
+  document.getElementById('assert-res-badge').className = 'assert-res-badge';
   currentBodyRaw = message;
   currentBodyMime = '';
   document.getElementById('response-body-pre').textContent = message;
@@ -2406,6 +2691,12 @@ function loadRequest(req) {
   renderFormData();
   renderUrlEncoded();
 
+  assertions.length = 0;
+  (req.assertions ?? []).forEach(function(a) {
+    assertions.push({ id: nextId(), enabled: a.enabled, type: a.type, operator: a.operator, target: a.target, value: a.value });
+  });
+  renderAssertions();
+
   renderHeaders();
   updateBadges();
   switchTab('params');
@@ -2431,6 +2722,9 @@ document.getElementById('save-req-btn').addEventListener('click', () => {
       authApiKeyKey: state.auth.apiKeyKey,
       authApiKeyValue: state.auth.apiKeyValue,
       authApiKeyIn: state.auth.apiKeyIn,
+      assertions: assertions.map(function(a) {
+        return { enabled: a.enabled, type: a.type, operator: a.operator, target: a.target, value: a.value };
+      }),
     },
   });
 });

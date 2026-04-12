@@ -154,6 +154,12 @@
         "title": "히스토리 전체 삭제",
         "category": "ProtoKit",
         "icon": "$(clear-all)"
+      },
+      {
+        "command": "protokit.runCollection",
+        "title": "컬렉션 실행",
+        "category": "ProtoKit",
+        "icon": "$(play)"
       }
     ],
     "viewsWelcome": [
@@ -200,6 +206,11 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "protokit.runCollection",
+          "when": "view == protokit.collections && viewItem == collection",
+          "group": "0_run@1"
+        },
         {
           "command": "protokit.renameCollection",
           "when": "view == protokit.collections && viewItem == collection",
