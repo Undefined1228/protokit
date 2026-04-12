@@ -60,6 +60,110 @@
         "title": "새 요청",
         "category": "ProtoKit",
         "icon": "$(add)"
+      },
+      {
+        "command": "protokit.newProject",
+        "title": "새 프로젝트",
+        "category": "ProtoKit",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "protokit.renameProject",
+        "title": "프로젝트 이름 변경",
+        "category": "ProtoKit"
+      },
+      {
+        "command": "protokit.deleteProject",
+        "title": "프로젝트 삭제",
+        "category": "ProtoKit"
+      },
+      {
+        "command": "protokit.switchProject",
+        "title": "프로젝트 전환",
+        "category": "ProtoKit",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "protokit.newCollection",
+        "title": "새 컬렉션",
+        "category": "ProtoKit",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "protokit.renameCollection",
+        "title": "이름 변경",
+        "category": "ProtoKit"
+      },
+      {
+        "command": "protokit.deleteCollection",
+        "title": "컬렉션 삭제",
+        "category": "ProtoKit"
+      },
+      {
+        "command": "protokit.openSavedRequest",
+        "title": "요청 열기",
+        "category": "ProtoKit"
+      },
+      {
+        "command": "protokit.renameRequest",
+        "title": "이름 변경",
+        "category": "ProtoKit"
+      },
+      {
+        "command": "protokit.deleteRequest",
+        "title": "요청 삭제",
+        "category": "ProtoKit"
+      },
+      {
+        "command": "protokit.duplicateRequest",
+        "title": "요청 복제",
+        "category": "ProtoKit",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "protokit.moveRequestUp",
+        "title": "위로 이동",
+        "category": "ProtoKit",
+        "icon": "$(arrow-up)"
+      },
+      {
+        "command": "protokit.moveRequestDown",
+        "title": "아래로 이동",
+        "category": "ProtoKit",
+        "icon": "$(arrow-down)"
+      },
+      {
+        "command": "protokit.manageEnvironments",
+        "title": "환경변수 관리",
+        "category": "ProtoKit",
+        "icon": "$(symbol-variable)"
+      },
+      {
+        "command": "protokit.search",
+        "title": "컬렉션 검색",
+        "category": "ProtoKit",
+        "icon": "$(search)"
+      },
+      {
+        "command": "protokit.openHistoryEntry",
+        "title": "히스토리 요청 열기",
+        "category": "ProtoKit"
+      },
+      {
+        "command": "protokit.clearHistory",
+        "title": "히스토리 전체 삭제",
+        "category": "ProtoKit",
+        "icon": "$(clear-all)"
+      }
+    ],
+    "viewsWelcome": [
+      {
+        "view": "protokit.collections",
+        "contents": "ProtoKit에 오신 것을 환영합니다!\n\n프로젝트를 만들어 API 요청을 관리하세요.\n[새 프로젝트 만들기](command:protokit.newProject)"
+      },
+      {
+        "view": "protokit.history",
+        "contents": "요청을 보내면 기록이 여기에 표시됩니다."
       }
     ],
     "menus": {
@@ -67,7 +171,69 @@
         {
           "command": "protokit.newRequest",
           "when": "view == protokit.collections",
+          "group": "navigation@5"
+        },
+        {
+          "command": "protokit.newCollection",
+          "when": "view == protokit.collections",
+          "group": "navigation@4"
+        },
+        {
+          "command": "protokit.switchProject",
+          "when": "view == protokit.collections",
+          "group": "navigation@3"
+        },
+        {
+          "command": "protokit.manageEnvironments",
+          "when": "view == protokit.collections",
+          "group": "navigation@2"
+        },
+        {
+          "command": "protokit.search",
+          "when": "view == protokit.collections",
+          "group": "navigation@1"
+        },
+        {
+          "command": "protokit.clearHistory",
+          "when": "view == protokit.history",
           "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "protokit.renameCollection",
+          "when": "view == protokit.collections && viewItem == collection",
+          "group": "1_modify@1"
+        },
+        {
+          "command": "protokit.deleteCollection",
+          "when": "view == protokit.collections && viewItem == collection",
+          "group": "1_modify@2"
+        },
+        {
+          "command": "protokit.renameRequest",
+          "when": "view == protokit.collections && viewItem == request",
+          "group": "1_modify@1"
+        },
+        {
+          "command": "protokit.duplicateRequest",
+          "when": "view == protokit.collections && viewItem == request",
+          "group": "1_modify@2"
+        },
+        {
+          "command": "protokit.moveRequestUp",
+          "when": "view == protokit.collections && viewItem == request",
+          "group": "2_order@1"
+        },
+        {
+          "command": "protokit.moveRequestDown",
+          "when": "view == protokit.collections && viewItem == request",
+          "group": "2_order@2"
+        },
+        {
+          "command": "protokit.deleteRequest",
+          "when": "view == protokit.collections && viewItem == request",
+          "group": "3_delete@1"
         }
       ]
     }
