@@ -18,6 +18,11 @@ interface SendRequestPayload extends HttpRequestOptions {
   bodyUrlEncoded?: KVRow[];
   authType?: string;
   authToken?: string;
+  authBasicUsername?: string;
+  authBasicPassword?: string;
+  authApiKeyKey?: string;
+  authApiKeyValue?: string;
+  authApiKeyIn?: string;
 }
 
 interface SaveRequestPayload {
@@ -31,6 +36,11 @@ interface SaveRequestPayload {
   bodyUrlEncoded: KVRow[];
   authType: string;
   authToken: string;
+  authBasicUsername: string;
+  authBasicPassword: string;
+  authApiKeyKey: string;
+  authApiKeyValue: string;
+  authApiKeyIn: string;
 }
 
 export class RequestEditorPanel {
@@ -148,6 +158,31 @@ export class RequestEditorPanel {
     });
   }
 
+  private applyAuth(
+    headers: Record<string, string>,
+    queryParams: Record<string, string>,
+    payload: SendRequestPayload,
+    sub: (s: string) => string,
+  ): void {
+    const authType = payload.authType ?? 'none';
+    if (authType === 'basic') {
+      const username = sub(payload.authBasicUsername ?? '');
+      const password = sub(payload.authBasicPassword ?? '');
+      const encoded = Buffer.from(`${username}:${password}`).toString('base64');
+      headers['Authorization'] = `Basic ${encoded}`;
+    } else if (authType === 'apikey') {
+      const key = sub(payload.authApiKeyKey ?? '');
+      const value = sub(payload.authApiKeyValue ?? '');
+      if (key) {
+        if (payload.authApiKeyIn === 'query') {
+          queryParams[key] = value;
+        } else {
+          headers[key] = value;
+        }
+      }
+    }
+  }
+
   private async executeSend(payload: SendRequestPayload): Promise<void> {
     this.abortController?.abort();
     this.abortController = new AbortController();
@@ -155,48 +190,57 @@ export class RequestEditorPanel {
     const envVars = this.store.getActiveEnvironmentVariables();
     const sub = (s: string) => this.substituteVars(s, envVars);
 
+    const substitutedHeaders: Record<string, string> = Object.fromEntries(
+      Object.entries(payload.headers).map(([k, v]) => [sub(k), sub(v)]),
+    );
+    const extraQueryParams: Record<string, string> = {};
+    this.applyAuth(substitutedHeaders, extraQueryParams, payload, sub);
+
+    let substitutedUrl = sub(payload.url);
+    if (Object.keys(extraQueryParams).length > 0) {
+      const urlObj = new URL(substitutedUrl.startsWith('http') ? substitutedUrl : 'http://placeholder' + substitutedUrl);
+      for (const [k, v] of Object.entries(extraQueryParams)) {
+        urlObj.searchParams.set(k, v);
+      }
+      substitutedUrl = substitutedUrl.startsWith('http')
+        ? urlObj.toString()
+        : urlObj.pathname + urlObj.search;
+    }
+
     const substitutedPayload: HttpRequestOptions = {
       ...payload,
-      url: sub(payload.url),
-      headers: Object.fromEntries(
-        Object.entries(payload.headers).map(([k, v]) => [sub(k), sub(v)]),
-      ),
+      url: substitutedUrl,
+      headers: substitutedHeaders,
       body: payload.body ? sub(payload.body) : payload.body,
+    };
+
+    const historyBase = {
+      method: payload.method,
+      url: payload.rawUrl ?? payload.url,
+      params: payload.params ?? [],
+      headers: payload.rawHeaders ?? [],
+      bodyType: payload.bodyType ?? 'none',
+      body: payload.rawBody ?? '',
+      bodyFormData: payload.bodyFormData ?? [],
+      bodyUrlEncoded: payload.bodyUrlEncoded ?? [],
+      authType: payload.authType ?? 'none',
+      authToken: payload.authToken ?? '',
+      authBasicUsername: payload.authBasicUsername ?? '',
+      authBasicPassword: payload.authBasicPassword ?? '',
+      authApiKeyKey: payload.authApiKeyKey ?? '',
+      authApiKeyValue: payload.authApiKeyValue ?? '',
+      authApiKeyIn: payload.authApiKeyIn ?? 'header',
     };
 
     try {
       const response = await sendHttpRequest(substitutedPayload, this.abortController.signal);
       this.panel.webview.postMessage({ type: 'response', payload: response });
-      this.store.addHistory({
-        method: payload.rawUrl ? payload.method : payload.method,
-        url: payload.rawUrl ?? payload.url,
-        status: response.status,
-        duration: response.duration,
-        params: payload.params ?? [],
-        headers: payload.rawHeaders ?? [],
-        bodyType: payload.bodyType ?? 'none',
-        body: payload.rawBody ?? '',
-        bodyFormData: payload.bodyFormData ?? [],
-        bodyUrlEncoded: payload.bodyUrlEncoded ?? [],
-        authType: payload.authType ?? 'none',
-        authToken: payload.authToken ?? '',
-      });
+      this.store.addHistory({ ...historyBase, status: response.status, duration: response.duration });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       if (!this.abortController.signal.aborted) {
         this.panel.webview.postMessage({ type: 'requestError', payload: { message } });
-        this.store.addHistory({
-          method: payload.method,
-          url: payload.rawUrl ?? payload.url,
-          params: payload.params ?? [],
-          headers: payload.rawHeaders ?? [],
-          bodyType: payload.bodyType ?? 'none',
-          body: payload.rawBody ?? '',
-          bodyFormData: payload.bodyFormData ?? [],
-          bodyUrlEncoded: payload.bodyUrlEncoded ?? [],
-          authType: payload.authType ?? 'none',
-          authToken: payload.authToken ?? '',
-        });
+        this.store.addHistory(historyBase);
       }
     }
   }
@@ -599,6 +643,24 @@ table.kv-table tbody td:last-child  { text-align: center; }
 .auth-none-hint {
   color: var(--vscode-descriptionForeground);
   font-size: 12px;
+}
+.auth-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.auth-inline-select {
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border, transparent);
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+}
+.auth-inline-select:focus {
+  border-color: var(--vscode-focusBorder);
 }
 
 /* ── Settings bar ──────────────────────────────────────────── */
@@ -1200,14 +1262,45 @@ const HTML = `
         <select class="auth-select" id="auth-type-select">
           <option value="none">없음</option>
           <option value="bearer">Bearer Token</option>
+          <option value="basic">Basic Auth</option>
+          <option value="apikey">API Key</option>
         </select>
       </div>
-      <div id="auth-bearer-section" hidden>
+      <div id="auth-bearer-section" class="auth-section" hidden>
         <div class="auth-field">
           <label for="auth-token-input">Token</label>
           <input type="text" class="auth-token-input" id="auth-token-input" placeholder="토큰을 입력하세요..." />
         </div>
         <p class="auth-hint">Authorization: Bearer &lt;token&gt; 헤더가 자동으로 추가됩니다.</p>
+      </div>
+      <div id="auth-basic-section" class="auth-section" hidden>
+        <div class="auth-field">
+          <label for="auth-basic-username">Username</label>
+          <input type="text" class="auth-token-input" id="auth-basic-username" placeholder="사용자 이름..." />
+        </div>
+        <div class="auth-field">
+          <label for="auth-basic-password">Password</label>
+          <input type="password" class="auth-token-input" id="auth-basic-password" placeholder="비밀번호..." />
+        </div>
+        <p class="auth-hint">Authorization: Basic &lt;base64(username:password)&gt; 헤더가 자동으로 추가됩니다.</p>
+      </div>
+      <div id="auth-apikey-section" class="auth-section" hidden>
+        <div class="auth-field">
+          <label for="auth-apikey-key">Key</label>
+          <input type="text" class="auth-token-input" id="auth-apikey-key" placeholder="헤더/파라미터 이름..." />
+        </div>
+        <div class="auth-field">
+          <label for="auth-apikey-value">Value</label>
+          <input type="text" class="auth-token-input" id="auth-apikey-value" placeholder="값..." />
+        </div>
+        <div class="auth-field">
+          <label>위치</label>
+          <select class="auth-inline-select" id="auth-apikey-in">
+            <option value="header">Header</option>
+            <option value="query">Query Param</option>
+          </select>
+        </div>
+        <p class="auth-hint" id="auth-apikey-hint">지정한 헤더에 key: value가 자동으로 추가됩니다.</p>
       </div>
       <p class="auth-none-hint" id="auth-none-hint">인증 없음. 유형을 선택하세요.</p>
     </div>
@@ -1307,6 +1400,11 @@ const state = {
   auth: {
     type: 'none',
     token: '',
+    basicUsername: '',
+    basicPassword: '',
+    apiKeyKey: '',
+    apiKeyValue: '',
+    apiKeyIn: 'header',
   },
   _nextId: 1,
 };
@@ -1522,14 +1620,11 @@ function updateContentTypeHeader(bodyType) {
 }
 
 /* ── Authorization 자동 관리 ────────────────────────────────── */
-function updateAuthorizationHeader(authType, token) {
+function setManagedHeader(key, value) {
   const idx = state.headers.findIndex(h => h.managed === 'authorization');
-
-  if (authType === 'none' || !token.trim()) {
-    if (idx >= 0) state.headers.splice(idx, 1);
-  } else {
-    const value = 'Bearer ' + token.trim();
+  if (value) {
     if (idx >= 0) {
+      state.headers[idx].key = key;
       state.headers[idx].value = value;
     } else {
       const contentTypeIdx = state.headers.findIndex(h => h.managed === 'content-type');
@@ -1537,11 +1632,36 @@ function updateAuthorizationHeader(authType, token) {
       state.headers.splice(insertAt, 0, {
         id: nextId(),
         enabled: true,
-        key: 'Authorization',
+        key,
         value,
         managed: 'authorization',
       });
     }
+  } else {
+    if (idx >= 0) state.headers.splice(idx, 1);
+  }
+}
+
+function updateAuthorizationHeader(authType, auth) {
+  if (authType === 'bearer') {
+    const token = (auth.token ?? '').trim();
+    setManagedHeader('Authorization', token ? 'Bearer ' + token : '');
+  } else if (authType === 'basic') {
+    const u = (auth.basicUsername ?? '').trim();
+    const p = (auth.basicPassword ?? '');
+    setManagedHeader('Authorization', (u || p) ? 'Basic ' + btoa(u + ':' + p) : '');
+  } else if (authType === 'apikey') {
+    const k = (auth.apiKeyKey ?? '').trim();
+    const v = (auth.apiKeyValue ?? '');
+    if (auth.apiKeyIn === 'header') {
+      setManagedHeader(k || 'X-API-Key', k ? v : '');
+    } else {
+      const idx = state.headers.findIndex(h => h.managed === 'authorization');
+      if (idx >= 0) state.headers.splice(idx, 1);
+    }
+  } else {
+    const idx = state.headers.findIndex(h => h.managed === 'authorization');
+    if (idx >= 0) state.headers.splice(idx, 1);
   }
 
   renderHeaders();
@@ -1607,22 +1727,66 @@ document.getElementById('add-body-field').addEventListener('click', () => {
 
 /* ── Auth ──────────────────────────────────────────────────── */
 const authTypeSelect = document.getElementById('auth-type-select');
-const authBearerSection = document.getElementById('auth-bearer-section');
 const authNoneHint = document.getElementById('auth-none-hint');
 const authTokenInput = document.getElementById('auth-token-input');
+const authBasicUsername = document.getElementById('auth-basic-username');
+const authBasicPassword = document.getElementById('auth-basic-password');
+const authApiKeyKey = document.getElementById('auth-apikey-key');
+const authApiKeyValue = document.getElementById('auth-apikey-value');
+const authApiKeyIn = document.getElementById('auth-apikey-in');
+const authApiKeyHint = document.getElementById('auth-apikey-hint');
+
+function showAuthSection(type) {
+  document.getElementById('auth-bearer-section').hidden = type !== 'bearer';
+  document.getElementById('auth-basic-section').hidden  = type !== 'basic';
+  document.getElementById('auth-apikey-section').hidden = type !== 'apikey';
+  authNoneHint.hidden = type !== 'none';
+}
+
+function updateApiKeyHint() {
+  const inVal = authApiKeyIn.value;
+  authApiKeyHint.textContent = inVal === 'query'
+    ? '쿼리 파라미터에 key=value가 자동으로 추가됩니다.'
+    : '지정한 헤더에 key: value가 자동으로 추가됩니다.';
+}
 
 authTypeSelect.addEventListener('change', () => {
   const type = authTypeSelect.value;
   state.auth.type = type;
-  authBearerSection.hidden = type !== 'bearer';
-  authNoneHint.hidden = type !== 'none';
-  updateAuthorizationHeader(type, state.auth.token);
+  showAuthSection(type);
+  updateAuthorizationHeader(type, state.auth);
   updateBadges();
 });
 
 authTokenInput.addEventListener('input', () => {
   state.auth.token = authTokenInput.value;
-  updateAuthorizationHeader(state.auth.type, state.auth.token);
+  updateAuthorizationHeader(state.auth.type, state.auth);
+});
+
+authBasicUsername.addEventListener('input', () => {
+  state.auth.basicUsername = authBasicUsername.value;
+  updateAuthorizationHeader(state.auth.type, state.auth);
+});
+
+authBasicPassword.addEventListener('input', () => {
+  state.auth.basicPassword = authBasicPassword.value;
+  updateAuthorizationHeader(state.auth.type, state.auth);
+});
+
+authApiKeyKey.addEventListener('input', () => {
+  state.auth.apiKeyKey = authApiKeyKey.value;
+  updateAuthorizationHeader(state.auth.type, state.auth);
+});
+
+authApiKeyValue.addEventListener('input', () => {
+  state.auth.apiKeyValue = authApiKeyValue.value;
+  updateAuthorizationHeader(state.auth.type, state.auth);
+});
+
+authApiKeyIn.addEventListener('change', () => {
+  state.auth.apiKeyIn = authApiKeyIn.value;
+  updateApiKeyHint();
+  updateAuthorizationHeader(state.auth.type, state.auth);
 });
 
 /* ── 히스토리 ──────────────────────────────────────────────── */
@@ -1705,12 +1869,16 @@ function restoreHistory(entry) {
   state.headers = [...managed, ...JSON.parse(JSON.stringify(entry.headers))];
 
   state.auth = JSON.parse(JSON.stringify(entry.auth));
-  const authSel = document.getElementById('auth-type-select');
-  authSel.value = entry.auth.type;
-  document.getElementById('auth-bearer-section').hidden = entry.auth.type !== 'bearer';
-  document.getElementById('auth-none-hint').hidden = entry.auth.type !== 'none';
-  document.getElementById('auth-token-input').value = entry.auth.token;
-  updateAuthorizationHeader(entry.auth.type, entry.auth.token);
+  document.getElementById('auth-type-select').value = state.auth.type;
+  document.getElementById('auth-token-input').value = state.auth.token ?? '';
+  document.getElementById('auth-basic-username').value = state.auth.basicUsername ?? '';
+  document.getElementById('auth-basic-password').value = state.auth.basicPassword ?? '';
+  document.getElementById('auth-apikey-key').value = state.auth.apiKeyKey ?? '';
+  document.getElementById('auth-apikey-value').value = state.auth.apiKeyValue ?? '';
+  document.getElementById('auth-apikey-in').value = state.auth.apiKeyIn ?? 'header';
+  showAuthSection(state.auth.type);
+  updateApiKeyHint();
+  updateAuthorizationHeader(state.auth.type, state.auth);
 
   state.body = JSON.parse(JSON.stringify(entry.body));
   const radio = document.querySelector('input[name="body-type"][value="' + entry.body.type + '"]');
@@ -2036,6 +2204,11 @@ function sendRequest() {
       bodyUrlEncoded: state.body.urlEncoded.map(f => ({ enabled: f.enabled, key: f.key, value: f.value })),
       authType: state.auth.type,
       authToken: state.auth.token,
+      authBasicUsername: state.auth.basicUsername,
+      authBasicPassword: state.auth.basicPassword,
+      authApiKeyKey: state.auth.apiKeyKey,
+      authApiKeyValue: state.auth.apiKeyValue,
+      authApiKeyIn: state.auth.apiKeyIn,
     },
   });
 }
@@ -2199,12 +2372,25 @@ function loadRequest(req) {
   const managed = state.headers.filter(h => h.managed);
   state.headers = [...managed, ...(req.headers ?? []).map(h => ({ ...h, id: nextId(), managed: null }))];
 
-  state.auth = { type: req.authType ?? 'none', token: req.authToken ?? '' };
+  state.auth = {
+    type: req.authType ?? 'none',
+    token: req.authToken ?? '',
+    basicUsername: req.authBasicUsername ?? '',
+    basicPassword: req.authBasicPassword ?? '',
+    apiKeyKey: req.authApiKeyKey ?? '',
+    apiKeyValue: req.authApiKeyValue ?? '',
+    apiKeyIn: req.authApiKeyIn ?? 'header',
+  };
   document.getElementById('auth-type-select').value = state.auth.type;
-  document.getElementById('auth-bearer-section').hidden = state.auth.type !== 'bearer';
-  document.getElementById('auth-none-hint').hidden = state.auth.type !== 'none';
   document.getElementById('auth-token-input').value = state.auth.token;
-  updateAuthorizationHeader(state.auth.type, state.auth.token);
+  document.getElementById('auth-basic-username').value = state.auth.basicUsername;
+  document.getElementById('auth-basic-password').value = state.auth.basicPassword;
+  document.getElementById('auth-apikey-key').value = state.auth.apiKeyKey;
+  document.getElementById('auth-apikey-value').value = state.auth.apiKeyValue;
+  document.getElementById('auth-apikey-in').value = state.auth.apiKeyIn;
+  showAuthSection(state.auth.type);
+  updateApiKeyHint();
+  updateAuthorizationHeader(state.auth.type, state.auth);
 
   state.body = {
     type: req.bodyType ?? 'none',
@@ -2240,6 +2426,11 @@ document.getElementById('save-req-btn').addEventListener('click', () => {
       bodyUrlEncoded: state.body.urlEncoded.map(f => ({ enabled: f.enabled, key: f.key, value: f.value })),
       authType: state.auth.type,
       authToken: state.auth.token,
+      authBasicUsername: state.auth.basicUsername,
+      authBasicPassword: state.auth.basicPassword,
+      authApiKeyKey: state.auth.apiKeyKey,
+      authApiKeyValue: state.auth.apiKeyValue,
+      authApiKeyIn: state.auth.apiKeyIn,
     },
   });
 });

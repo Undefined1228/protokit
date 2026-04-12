@@ -165,6 +165,11 @@ export function activate(context: vscode.ExtensionContext) {
         bodyUrlEncoded: entry.bodyUrlEncoded,
         authType: entry.authType,
         authToken: entry.authToken,
+        authBasicUsername: entry.authBasicUsername,
+        authBasicPassword: entry.authBasicPassword,
+        authApiKeyKey: entry.authApiKeyKey,
+        authApiKeyValue: entry.authApiKeyValue,
+        authApiKeyIn: entry.authApiKeyIn,
       };
       RequestEditorPanel.create(context, store, req);
     }),

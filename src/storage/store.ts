@@ -19,6 +19,11 @@ export interface SavedRequest {
   bodyUrlEncoded: KVRow[];
   authType: string;
   authToken: string;
+  authBasicUsername?: string;
+  authBasicPassword?: string;
+  authApiKeyKey?: string;
+  authApiKeyValue?: string;
+  authApiKeyIn?: string;
 }
 
 export interface Environment {
@@ -56,6 +61,11 @@ export interface HistoryEntry {
   bodyUrlEncoded: KVRow[];
   authType: string;
   authToken: string;
+  authBasicUsername?: string;
+  authBasicPassword?: string;
+  authApiKeyKey?: string;
+  authApiKeyValue?: string;
+  authApiKeyIn?: string;
 }
 
 const STATE_KEY = 'protokit.v2';
