@@ -1,28 +1,63 @@
 import * as vscode from 'vscode';
 import { sendHttpRequest, type HttpRequestOptions } from '../protocols/http/client';
+import type { ProtoKitStore, SavedRequest } from '../storage/store';
+
+interface KVRow {
+  enabled: boolean;
+  key: string;
+  value: string;
+}
 
 interface SendRequestPayload extends HttpRequestOptions {
-  // same shape as HttpRequestOptions
+  rawUrl?: string;
+  params?: KVRow[];
+  rawHeaders?: KVRow[];
+  bodyType?: string;
+  rawBody?: string;
+  bodyFormData?: KVRow[];
+  bodyUrlEncoded?: KVRow[];
+  authType?: string;
+  authToken?: string;
+}
+
+interface SaveRequestPayload {
+  method: string;
+  url: string;
+  params: KVRow[];
+  headers: KVRow[];
+  bodyType: string;
+  body: string;
+  bodyFormData: KVRow[];
+  bodyUrlEncoded: KVRow[];
+  authType: string;
+  authToken: string;
 }
 
 export class RequestEditorPanel {
   private abortController: AbortController | null = null;
 
-  private constructor(private readonly panel: vscode.WebviewPanel) {
+  private constructor(
+    private readonly panel: vscode.WebviewPanel,
+    private readonly store: ProtoKitStore,
+    private readonly context: vscode.ExtensionContext,
+    private readonly initialRequest?: SavedRequest,
+  ) {
     panel.webview.html = buildWebviewHtml();
   }
 
-  static create(context: vscode.ExtensionContext): void {
+  static create(
+    context: vscode.ExtensionContext,
+    store: ProtoKitStore,
+    initialRequest?: SavedRequest,
+  ): void {
+    const title = initialRequest ? initialRequest.name : '새 요청';
     const panel = vscode.window.createWebviewPanel(
       'protokit.requestEditor',
-      '새 요청',
+      title,
       vscode.ViewColumn.Active,
-      {
-        enableScripts: true,
-        retainContextWhenHidden: true,
-      }
+      { enableScripts: true, retainContextWhenHidden: true },
     );
-    const editor = new RequestEditorPanel(panel);
+    const editor = new RequestEditorPanel(panel, store, context, initialRequest);
     panel.webview.onDidReceiveMessage(
       (msg: { type: string; payload: unknown }) => editor.handleMessage(msg),
       null,
@@ -41,7 +76,55 @@ export class RequestEditorPanel {
       case 'saveBody':
         this.saveBodyToFile(msg.payload as { body: string; mimeType: string });
         break;
+      case 'saveRequest':
+        this.handleSaveRequest(msg.payload as SaveRequestPayload);
+        break;
+      case 'ready':
+        if (this.initialRequest) {
+          this.panel.webview.postMessage({ type: 'loadRequest', payload: this.initialRequest });
+        }
+        this.panel.webview.postMessage({
+          type: 'setEnvVars',
+          payload: this.store.getActiveEnvironmentVariables(),
+        });
+        break;
     }
+  }
+
+  private async handleSaveRequest(payload: SaveRequestPayload): Promise<void> {
+    const project = this.store.getActiveProject();
+    if (!project) {
+      vscode.window.showWarningMessage('활성 프로젝트가 없습니다. 먼저 프로젝트를 만들어 주세요.');
+      return;
+    }
+
+    if (!project.collections.length) {
+      const choice = await vscode.window.showWarningMessage(
+        '컬렉션이 없습니다.',
+        '새 컬렉션 만들기',
+      );
+      if (choice) {
+        const name = await vscode.window.showInputBox({ prompt: '새 컬렉션 이름' });
+        if (!name?.trim()) return;
+        this.store.createCollection(project.id, name.trim());
+      } else {
+        return;
+      }
+    }
+
+    const updated = this.store.getActiveProject()!;
+    const colPick = await vscode.window.showQuickPick(
+      updated.collections.map(c => ({ label: c.name, id: c.id })),
+      { placeHolder: '저장할 컬렉션 선택' },
+    );
+    if (!colPick) return;
+
+    const defaultName = payload.method + '  ' + (payload.url || '새 요청');
+    const name = await vscode.window.showInputBox({ prompt: '요청 이름', value: defaultName });
+    if (!name?.trim()) return;
+
+    this.store.saveRequest(project.id, colPick.id, { name: name.trim(), ...payload });
+    vscode.window.showInformationMessage(`"${name.trim()}" 요청이 저장되었습니다.`);
   }
 
   private async saveBodyToFile(payload: { body: string; mimeType: string }): Promise<void> {
@@ -58,16 +141,62 @@ export class RequestEditorPanel {
     await vscode.workspace.fs.writeFile(uri, Buffer.from(payload.body, 'utf-8'));
   }
 
+  private substituteVars(str: string, vars: Record<string, string>): string {
+    return str.replace(/\{\{([^}]+)\}\}/g, (_, name: string) => {
+      const key = name.trim();
+      return key in vars ? vars[key] : `{{${name}}}`;
+    });
+  }
+
   private async executeSend(payload: SendRequestPayload): Promise<void> {
     this.abortController?.abort();
     this.abortController = new AbortController();
+
+    const envVars = this.store.getActiveEnvironmentVariables();
+    const sub = (s: string) => this.substituteVars(s, envVars);
+
+    const substitutedPayload: HttpRequestOptions = {
+      ...payload,
+      url: sub(payload.url),
+      headers: Object.fromEntries(
+        Object.entries(payload.headers).map(([k, v]) => [sub(k), sub(v)]),
+      ),
+      body: payload.body ? sub(payload.body) : payload.body,
+    };
+
     try {
-      const response = await sendHttpRequest(payload, this.abortController.signal);
+      const response = await sendHttpRequest(substitutedPayload, this.abortController.signal);
       this.panel.webview.postMessage({ type: 'response', payload: response });
+      this.store.addHistory({
+        method: payload.rawUrl ? payload.method : payload.method,
+        url: payload.rawUrl ?? payload.url,
+        status: response.status,
+        duration: response.duration,
+        params: payload.params ?? [],
+        headers: payload.rawHeaders ?? [],
+        bodyType: payload.bodyType ?? 'none',
+        body: payload.rawBody ?? '',
+        bodyFormData: payload.bodyFormData ?? [],
+        bodyUrlEncoded: payload.bodyUrlEncoded ?? [],
+        authType: payload.authType ?? 'none',
+        authToken: payload.authToken ?? '',
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       if (!this.abortController.signal.aborted) {
         this.panel.webview.postMessage({ type: 'requestError', payload: { message } });
+        this.store.addHistory({
+          method: payload.method,
+          url: payload.rawUrl ?? payload.url,
+          params: payload.params ?? [],
+          headers: payload.rawHeaders ?? [],
+          bodyType: payload.bodyType ?? 'none',
+          body: payload.rawBody ?? '',
+          bodyFormData: payload.bodyFormData ?? [],
+          bodyUrlEncoded: payload.bodyUrlEncoded ?? [],
+          authType: payload.authType ?? 'none',
+          authToken: payload.authToken ?? '',
+        });
       }
     }
   }
@@ -771,6 +900,21 @@ table.kv-table tbody td:last-child  { text-align: center; }
 .json-bool { color: #569cd6; }
 .json-null { color: #569cd6; opacity: .7; }
 
+/* Save request button */
+.save-req-btn {
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  border: none;
+  border-radius: 3px;
+  padding: 5px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.save-req-btn:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+
 /* Response headers table */
 .res-headers-table thead th:first-child { width: 220px; }
 
@@ -908,6 +1052,7 @@ const HTML = `
   </select>
   <input type="text" class="url-input" id="url-input" placeholder="https://example.com/api/..." />
   <button class="send-btn" id="send-btn">전송</button>
+  <button class="save-req-btn" id="save-req-btn">저장</button>
   <button class="cancel-btn" id="cancel-btn" hidden>취소</button>
   <div class="export-dropdown" id="export-dropdown">
     <button class="export-btn" id="export-btn">내보내기 ▾</button>
@@ -1117,6 +1262,16 @@ const HTML = `
 
 const JS = `
 const vscode = acquireVsCodeApi();
+
+/* ── 환경변수 ──────────────────────────────────────────────── */
+let envVars = {};
+
+function substituteVars(str) {
+  return str.replace(/\{\{([^}]+)\}\}/g, (_, name) => {
+    const key = name.trim();
+    return key in envVars ? envVars[key] : '{{' + name + '}}';
+  });
+}
 
 const settings = {
   timeout: 30,
@@ -1776,6 +1931,7 @@ renderFormData();
 renderUrlEncoded();
 renderCookies();
 updateBadges();
+vscode.postMessage({ type: 'ready' });
 
 /* ── 요청 전송 ─────────────────────────────────────────────── */
 function buildUrl() {
@@ -1838,16 +1994,21 @@ function setSending(sending) {
 }
 
 function sendRequest() {
-  const url = buildUrl();
-  if (!url) {
+  const rawUrl = buildUrl();
+  if (!rawUrl) {
     document.getElementById('url-input').focus();
     return;
   }
 
-  const { body, contentType } = collectBody();
+  const url = substituteVars(rawUrl);
+  let { body, contentType } = collectBody();
   const headers = collectHeaders();
   if (contentType) {
     headers['Content-Type'] = contentType;
+  }
+  if (body) body = substituteVars(body);
+  for (const k of Object.keys(headers)) {
+    headers[k] = substituteVars(headers[k]);
   }
 
   setSending(true);
@@ -1866,6 +2027,15 @@ function sendRequest() {
       sslIgnore: settings.sslIgnore,
       proxyHttp: settings.proxyHttp || undefined,
       proxyHttps: settings.proxyHttps || undefined,
+      rawUrl: state.url,
+      params: state.params.filter(p => !p.managed).map(p => ({ enabled: p.enabled, key: p.key, value: p.value })),
+      rawHeaders: state.headers.filter(h => !h.managed).map(h => ({ enabled: h.enabled, key: h.key, value: h.value })),
+      bodyType: state.body.type,
+      rawBody: state.body.json,
+      bodyFormData: state.body.formData.map(f => ({ enabled: f.enabled, key: f.key, value: f.value })),
+      bodyUrlEncoded: state.body.urlEncoded.map(f => ({ enabled: f.enabled, key: f.key, value: f.value })),
+      authType: state.auth.type,
+      authToken: state.auth.token,
     },
   });
 }
@@ -2006,7 +2176,72 @@ window.addEventListener('message', event => {
     showResponse(msg.payload);
   } else if (msg.type === 'requestError') {
     showError(msg.payload.message);
+  } else if (msg.type === 'loadRequest') {
+    loadRequest(msg.payload);
+  } else if (msg.type === 'setEnvVars') {
+    envVars = msg.payload ?? {};
   }
+});
+
+/* ── 요청 불러오기 ──────────────────────────────────────────── */
+function loadRequest(req) {
+  state.method = req.method;
+  const methodSel = document.getElementById('method-select');
+  methodSel.value = req.method;
+  methodSel.className = 'method-select ' + req.method;
+
+  state.url = req.url;
+  document.getElementById('url-input').value = req.url;
+
+  state.params = (req.params ?? []).map(p => ({ ...p, id: nextId(), managed: null }));
+  renderParams();
+
+  const managed = state.headers.filter(h => h.managed);
+  state.headers = [...managed, ...(req.headers ?? []).map(h => ({ ...h, id: nextId(), managed: null }))];
+
+  state.auth = { type: req.authType ?? 'none', token: req.authToken ?? '' };
+  document.getElementById('auth-type-select').value = state.auth.type;
+  document.getElementById('auth-bearer-section').hidden = state.auth.type !== 'bearer';
+  document.getElementById('auth-none-hint').hidden = state.auth.type !== 'none';
+  document.getElementById('auth-token-input').value = state.auth.token;
+  updateAuthorizationHeader(state.auth.type, state.auth.token);
+
+  state.body = {
+    type: req.bodyType ?? 'none',
+    json: req.body ?? '',
+    formData: (req.bodyFormData ?? []).map(f => ({ ...f, id: nextId(), managed: null })),
+    urlEncoded: (req.bodyUrlEncoded ?? []).map(f => ({ ...f, id: nextId(), managed: null })),
+  };
+  const radio = document.querySelector('input[name="body-type"][value="' + state.body.type + '"]');
+  if (radio) radio.checked = true;
+  switchBodyEditor(state.body.type);
+  document.getElementById('body-json-textarea').value = state.body.json;
+  updateContentTypeHeader(state.body.type);
+  renderFormData();
+  renderUrlEncoded();
+
+  renderHeaders();
+  updateBadges();
+  switchTab('params');
+}
+
+/* ── 요청 저장 버튼 ────────────────────────────────────────── */
+document.getElementById('save-req-btn').addEventListener('click', () => {
+  vscode.postMessage({
+    type: 'saveRequest',
+    payload: {
+      method: state.method,
+      url: state.url,
+      params: state.params.filter(p => !p.managed).map(p => ({ enabled: p.enabled, key: p.key, value: p.value })),
+      headers: state.headers.filter(h => !h.managed).map(h => ({ enabled: h.enabled, key: h.key, value: h.value })),
+      bodyType: state.body.type,
+      body: state.body.json,
+      bodyFormData: state.body.formData.map(f => ({ enabled: f.enabled, key: f.key, value: f.value })),
+      bodyUrlEncoded: state.body.urlEncoded.map(f => ({ enabled: f.enabled, key: f.key, value: f.value })),
+      authType: state.auth.type,
+      authToken: state.auth.token,
+    },
+  });
 });
 
 /* ── 요청 내보내기 ─────────────────────────────────────────── */
