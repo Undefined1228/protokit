@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { RequestEditorPanel } from './panels/RequestEditorPanel';
 import { CollectionRunnerPanel } from './panels/CollectionRunnerPanel';
+import { WebSocketPanel } from './panels/WebSocketPanel';
 import { ProtoKitStore } from './storage/store';
 import { CollectionTreeProvider, CollectionItem, RequestItem } from './providers/CollectionTreeProvider';
 import { HistoryTreeProvider, HistoryItem } from './providers/HistoryTreeProvider';
@@ -56,6 +57,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.commands.registerCommand('protokit.newRequest', () => {
       RequestEditorPanel.create(context, store);
+    }),
+
+    vscode.commands.registerCommand('protokit.newWebSocket', () => {
+      WebSocketPanel.create(context);
     }),
 
     vscode.commands.registerCommand('protokit.openSavedRequest', (item: RequestItem) => {

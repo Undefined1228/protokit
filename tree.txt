@@ -41,10 +41,15 @@
 │   ├── panels
 │   │   ├── CollectionRunnerPanel.ts
 │   │   ├── RequestEditorPanel.ts
-│   │   └── requestEditorWebview.ts
+│   │   ├── requestEditorWebview.ts
+│   │   ├── WebSocketPanel.ts
+│   │   └── webSocketWebview.ts
 │   ├── protocols
-│   │   └── http
-│   │       └── client.ts
+│   │   ├── http
+│   │   │   └── client.ts
+│   │   └── ws
+│   │       ├── client.ts
+│   │       └── server.ts
 │   ├── providers
 │   │   ├── CollectionTreeProvider.ts
 │   │   └── HistoryTreeProvider.ts
@@ -53,4 +58,4 @@
 ├── tree.txt
 └── tsconfig.json
 
-11 directories, 43 files
+12 directories, 47 files

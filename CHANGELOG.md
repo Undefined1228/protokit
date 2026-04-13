@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### 기능 — Phase 5: WebSocket 클라이언트 & 서버
+
+- `protocols/ws/client.ts` 신규 — `ws` 패키지 기반 WebSocket 클라이언트 래퍼 (`WsClient`)
+- `protocols/ws/server.ts` 신규 — 로컬 WebSocket 서버 래퍼 (`WsServer`), 이벤트 핸들러 규칙 지원
+- `panels/WebSocketPanel.ts` 신규 — 클라이언트/서버 연결 관리 및 webview 메시지 라우팅
+- `panels/webSocketWebview.ts` 신규 — WebSocket UI (CSS · HTML · JS)
+- **클라이언트 탭**: URL 입력 (ws:// / wss://), 연결 헤더, Connect/Disconnect 버튼, 연결 상태 뱃지, 메시지 송수신 (text/JSON), 스트림 뷰어 (방향·타임스탬프·payload), 필터(전체/송신/수신), 로그 저장
+- **서버 탭**: 포트 설정, 로컬 WS 서버 시작/중지, 연결된 클라이언트 목록, 수신 메시지 로그, 개별/전체 broadcast 전송, 이벤트 핸들러(연결·메시지·해제 시 자동 응답 규칙)
+- `protokit.newWebSocket` 커맨드 추가 — 컬렉션 뷰 툴바에서 접근 가능
+- `ws` npm 패키지 의존성 추가
+
 ### 리팩터링 — Phase 4.7: Project 레이어 제거 & 환경변수 Collection 단위화
 
 - `Project > Collection > Request` 3단계 구조에서 Project 레이어 제거 → `Collection > Request` 2단계로 단순화
