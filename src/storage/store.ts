@@ -39,12 +39,6 @@ export interface Collection {
   id: string;
   name: string;
   requests: SavedRequest[];
-}
-
-export interface Project {
-  id: string;
-  name: string;
-  collections: Collection[];
   environments: Environment[];
   activeEnvironmentId: string | null;
 }
@@ -79,17 +73,49 @@ export interface HistoryEntry {
   authApiKeyIn?: string;
 }
 
-const STATE_KEY = 'protokit.v2';
+const STATE_KEY = 'protokit.v3';
 const MAX_HISTORY = 100;
 
 interface StoreData {
-  projects: Project[];
-  activeProjectId: string | null;
+  collections: Collection[];
+  history: HistoryEntry[];
+}
+
+interface V2Collection {
+  id: string;
+  name: string;
+  requests: SavedRequest[];
+}
+interface V2Project {
+  id: string;
+  name: string;
+  collections: V2Collection[];
+  environments: Environment[];
+  activeEnvironmentId: string | null;
+}
+interface V2StoreData {
+  projects: V2Project[];
   history: HistoryEntry[];
 }
 
 function generateId(): string {
   return Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
+}
+
+function migrateV2(v2: V2StoreData): StoreData {
+  const collections: Collection[] = [];
+  for (const project of v2.projects ?? []) {
+    for (const col of project.collections ?? []) {
+      collections.push({
+        id: col.id,
+        name: col.name,
+        requests: col.requests ?? [],
+        environments: project.environments ?? [],
+        activeEnvironmentId: project.activeEnvironmentId ?? null,
+      });
+    }
+  }
+  return { collections, history: v2.history ?? [] };
 }
 
 export class ProtoKitStore {
@@ -98,11 +124,18 @@ export class ProtoKitStore {
   readonly onDidChange = this._onChange.event;
 
   constructor(private readonly context: vscode.ExtensionContext) {
-    this.data = context.globalState.get<StoreData>(STATE_KEY) ?? {
-      projects: [],
-      activeProjectId: null,
-      history: [],
-    };
+    const v3 = context.globalState.get<StoreData>(STATE_KEY);
+    if (v3) {
+      this.data = v3;
+    } else {
+      const v2 = context.globalState.get<V2StoreData>('protokit.v2');
+      if (v2?.projects) {
+        this.data = migrateV2(v2);
+        this.context.globalState.update(STATE_KEY, this.data);
+      } else {
+        this.data = { collections: [], history: [] };
+      }
+    }
   }
 
   private persist(): void {
@@ -110,79 +143,39 @@ export class ProtoKitStore {
     this._onChange.fire();
   }
 
-  // ── Projects ───────────────────────────────────────────────
+  // ── Collections ────────────────────────────────────────────
 
-  getProjects(): Project[] {
-    return this.data.projects;
+  getCollections(): Collection[] {
+    return this.data.collections;
   }
 
-  getActiveProject(): Project | undefined {
-    return this.data.projects.find(p => p.id === this.data.activeProjectId);
-  }
-
-  getActiveProjectId(): string | null {
-    return this.data.activeProjectId;
-  }
-
-  createProject(name: string): Project {
-    const project: Project = {
+  createCollection(name: string): Collection {
+    const col: Collection = {
       id: generateId(),
       name,
-      collections: [],
+      requests: [],
       environments: [],
       activeEnvironmentId: null,
     };
-    this.data.projects.push(project);
-    if (!this.data.activeProjectId) {
-      this.data.activeProjectId = project.id;
-    }
-    this.persist();
-    return project;
-  }
-
-  renameProject(id: string, name: string): void {
-    const p = this.data.projects.find(p => p.id === id);
-    if (p) { p.name = name; this.persist(); }
-  }
-
-  deleteProject(id: string): void {
-    this.data.projects = this.data.projects.filter(p => p.id !== id);
-    if (this.data.activeProjectId === id) {
-      this.data.activeProjectId = this.data.projects[0]?.id ?? null;
-    }
-    this.persist();
-  }
-
-  switchProject(id: string): void {
-    this.data.activeProjectId = id;
-    this.persist();
-  }
-
-  // ── Collections ────────────────────────────────────────────
-
-  createCollection(projectId: string, name: string): Collection {
-    const p = this.data.projects.find(p => p.id === projectId);
-    if (!p) throw new Error('프로젝트를 찾을 수 없습니다.');
-    const col: Collection = { id: generateId(), name, requests: [] };
-    p.collections.push(col);
+    this.data.collections.push(col);
     this.persist();
     return col;
   }
 
-  renameCollection(projectId: string, collId: string, name: string): void {
-    const col = this.findCollection(projectId, collId);
+  renameCollection(collId: string, name: string): void {
+    const col = this.findCollection(collId);
     if (col) { col.name = name; this.persist(); }
   }
 
-  deleteCollection(projectId: string, collId: string): void {
-    const p = this.data.projects.find(p => p.id === projectId);
-    if (p) { p.collections = p.collections.filter(c => c.id !== collId); this.persist(); }
+  deleteCollection(collId: string): void {
+    this.data.collections = this.data.collections.filter(c => c.id !== collId);
+    this.persist();
   }
 
   // ── Requests ───────────────────────────────────────────────
 
-  saveRequest(projectId: string, collId: string, req: Omit<SavedRequest, 'id'>): SavedRequest {
-    const col = this.findCollection(projectId, collId);
+  saveRequest(collId: string, req: Omit<SavedRequest, 'id'>): SavedRequest {
+    const col = this.findCollection(collId);
     if (!col) throw new Error('컬렉션을 찾을 수 없습니다.');
     const saved: SavedRequest = { id: generateId(), ...req };
     col.requests.push(saved);
@@ -190,25 +183,25 @@ export class ProtoKitStore {
     return saved;
   }
 
-  updateRequest(projectId: string, collId: string, reqId: string, data: Omit<SavedRequest, 'id'>): void {
-    const req = this.findRequest(projectId, collId, reqId);
+  updateRequest(collId: string, reqId: string, data: Omit<SavedRequest, 'id'>): void {
+    const req = this.findRequest(collId, reqId);
     if (!req) return;
     Object.assign(req, data);
     this.persist();
   }
 
-  renameRequest(projectId: string, collId: string, reqId: string, name: string): void {
-    const req = this.findRequest(projectId, collId, reqId);
+  renameRequest(collId: string, reqId: string, name: string): void {
+    const req = this.findRequest(collId, reqId);
     if (req) { req.name = name; this.persist(); }
   }
 
-  deleteRequest(projectId: string, collId: string, reqId: string): void {
-    const col = this.findCollection(projectId, collId);
+  deleteRequest(collId: string, reqId: string): void {
+    const col = this.findCollection(collId);
     if (col) { col.requests = col.requests.filter(r => r.id !== reqId); this.persist(); }
   }
 
-  duplicateRequest(projectId: string, collId: string, reqId: string): void {
-    const col = this.findCollection(projectId, collId);
+  duplicateRequest(collId: string, reqId: string): void {
+    const col = this.findCollection(collId);
     const req = col?.requests.find(r => r.id === reqId);
     if (!col || !req) return;
     const idx = col.requests.indexOf(req);
@@ -217,8 +210,8 @@ export class ProtoKitStore {
     this.persist();
   }
 
-  moveRequest(projectId: string, collId: string, reqId: string, dir: 'up' | 'down'): void {
-    const col = this.findCollection(projectId, collId);
+  moveRequest(collId: string, reqId: string, dir: 'up' | 'down'): void {
+    const col = this.findCollection(collId);
     if (!col) return;
     const idx = col.requests.findIndex(r => r.id === reqId);
     const newIdx = dir === 'up' ? idx - 1 : idx + 1;
@@ -229,45 +222,46 @@ export class ProtoKitStore {
 
   // ── Environments ───────────────────────────────────────────
 
-  createEnvironment(projectId: string, name: string): Environment {
-    const p = this.data.projects.find(p => p.id === projectId);
-    if (!p) throw new Error('프로젝트를 찾을 수 없습니다.');
+  createEnvironment(collId: string, name: string): Environment {
+    const col = this.findCollection(collId);
+    if (!col) throw new Error('컬렉션을 찾을 수 없습니다.');
     const env: Environment = { id: generateId(), name, variables: {} };
-    p.environments.push(env);
-    if (!p.activeEnvironmentId) p.activeEnvironmentId = env.id;
+    col.environments.push(env);
+    if (!col.activeEnvironmentId) col.activeEnvironmentId = env.id;
     this.persist();
     return env;
   }
 
-  renameEnvironment(projectId: string, envId: string, name: string): void {
-    const env = this.findEnvironment(projectId, envId);
+  renameEnvironment(collId: string, envId: string, name: string): void {
+    const env = this.findEnvironment(collId, envId);
     if (env) { env.name = name; this.persist(); }
   }
 
-  deleteEnvironment(projectId: string, envId: string): void {
-    const p = this.data.projects.find(p => p.id === projectId);
-    if (!p) return;
-    p.environments = p.environments.filter(e => e.id !== envId);
-    if (p.activeEnvironmentId === envId) {
-      p.activeEnvironmentId = p.environments[0]?.id ?? null;
+  deleteEnvironment(collId: string, envId: string): void {
+    const col = this.findCollection(collId);
+    if (!col) return;
+    col.environments = col.environments.filter(e => e.id !== envId);
+    if (col.activeEnvironmentId === envId) {
+      col.activeEnvironmentId = col.environments[0]?.id ?? null;
     }
     this.persist();
   }
 
-  switchEnvironment(projectId: string, envId: string | null): void {
-    const p = this.data.projects.find(p => p.id === projectId);
-    if (p) { p.activeEnvironmentId = envId; this.persist(); }
+  switchEnvironment(collId: string, envId: string | null): void {
+    const col = this.findCollection(collId);
+    if (col) { col.activeEnvironmentId = envId; this.persist(); }
   }
 
-  updateEnvironmentVariables(projectId: string, envId: string, vars: Record<string, string>): void {
-    const env = this.findEnvironment(projectId, envId);
+  updateEnvironmentVariables(collId: string, envId: string, vars: Record<string, string>): void {
+    const env = this.findEnvironment(collId, envId);
     if (env) { env.variables = vars; this.persist(); }
   }
 
-  getActiveEnvironmentVariables(): Record<string, string> {
-    const p = this.getActiveProject();
-    if (!p || !p.activeEnvironmentId) return {};
-    return p.environments.find(e => e.id === p.activeEnvironmentId)?.variables ?? {};
+  getActiveEnvironmentVariables(collId?: string): Record<string, string> {
+    if (!collId) return {};
+    const col = this.findCollection(collId);
+    if (!col || !col.activeEnvironmentId) return {};
+    return col.environments.find(e => e.id === col.activeEnvironmentId)?.variables ?? {};
   }
 
   // ── History ────────────────────────────────────────────────
@@ -292,15 +286,15 @@ export class ProtoKitStore {
 
   // ── Helpers ────────────────────────────────────────────────
 
-  private findCollection(projectId: string, collId: string): Collection | undefined {
-    return this.data.projects.find(p => p.id === projectId)?.collections.find(c => c.id === collId);
+  private findCollection(collId: string): Collection | undefined {
+    return this.data.collections.find(c => c.id === collId);
   }
 
-  private findRequest(projectId: string, collId: string, reqId: string): SavedRequest | undefined {
-    return this.findCollection(projectId, collId)?.requests.find(r => r.id === reqId);
+  private findRequest(collId: string, reqId: string): SavedRequest | undefined {
+    return this.findCollection(collId)?.requests.find(r => r.id === reqId);
   }
 
-  private findEnvironment(projectId: string, envId: string): Environment | undefined {
-    return this.data.projects.find(p => p.id === projectId)?.environments.find(e => e.id === envId);
+  private findEnvironment(collId: string, envId: string): Environment | undefined {
+    return this.findCollection(collId)?.environments.find(e => e.id === envId);
   }
 }

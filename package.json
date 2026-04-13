@@ -62,28 +62,6 @@
         "icon": "$(add)"
       },
       {
-        "command": "protokit.newProject",
-        "title": "새 프로젝트",
-        "category": "ProtoKit",
-        "icon": "$(folder-opened)"
-      },
-      {
-        "command": "protokit.renameProject",
-        "title": "프로젝트 이름 변경",
-        "category": "ProtoKit"
-      },
-      {
-        "command": "protokit.deleteProject",
-        "title": "프로젝트 삭제",
-        "category": "ProtoKit"
-      },
-      {
-        "command": "protokit.switchProject",
-        "title": "프로젝트 전환",
-        "category": "ProtoKit",
-        "icon": "$(arrow-swap)"
-      },
-      {
         "command": "protokit.newCollection",
         "title": "새 컬렉션",
         "category": "ProtoKit",
@@ -165,7 +143,7 @@
     "viewsWelcome": [
       {
         "view": "protokit.collections",
-        "contents": "ProtoKit에 오신 것을 환영합니다!\n\n프로젝트를 만들어 API 요청을 관리하세요.\n[새 프로젝트 만들기](command:protokit.newProject)"
+        "contents": "ProtoKit에 오신 것을 환영합니다!\n\n컬렉션을 만들어 API 요청을 관리하세요.\n[새 컬렉션 만들기](command:protokit.newCollection)"
       },
       {
         "view": "protokit.history",
@@ -185,16 +163,6 @@
           "group": "navigation@4"
         },
         {
-          "command": "protokit.switchProject",
-          "when": "view == protokit.collections",
-          "group": "navigation@3"
-        },
-        {
-          "command": "protokit.manageEnvironments",
-          "when": "view == protokit.collections",
-          "group": "navigation@2"
-        },
-        {
           "command": "protokit.search",
           "when": "view == protokit.collections",
           "group": "navigation@1"
@@ -210,6 +178,11 @@
           "command": "protokit.runCollection",
           "when": "view == protokit.collections && viewItem == collection",
           "group": "0_run@1"
+        },
+        {
+          "command": "protokit.manageEnvironments",
+          "when": "view == protokit.collections && viewItem == collection",
+          "group": "0_run@2"
         },
         {
           "command": "protokit.renameCollection",

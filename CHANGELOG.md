@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+### 리팩터링 — Phase 4.7: Project 레이어 제거 & 환경변수 Collection 단위화
+
+- `Project > Collection > Request` 3단계 구조에서 Project 레이어 제거 → `Collection > Request` 2단계로 단순화
+- `Collection`에 `environments`, `activeEnvironmentId` 필드 추가 — 환경변수를 컬렉션 단위로 귀속
+- `STATE_KEY` `'protokit.v2'` → `'protokit.v3'` 변경, v2 데이터 자동 마이그레이션 (프로젝트 평탄화 + 부모 환경변수 복사)
+- Project 관련 커맨드 4개 제거 (`newProject`, `renameProject`, `deleteProject`, `switchProject`)
+- 트리뷰 상단 툴바에서 `switchProject` · `manageEnvironments` 제거, 컬렉션 우클릭 컨텍스트 메뉴에 `환경변수 관리` 추가
+- `CollectionItem description`에 활성 환경 이름 표시
+- `RequestEditorPanel` · `CollectionRunnerPanel`에서 `projectId` 파라미터 완전 제거
+- 환경변수 치환 `{{변수}}`를 컬렉션 단위로 적용
+- `viewsWelcome` 문구를 컬렉션 중심으로 변경
+
+### 리팩터링 — Phase 4.6: RequestEditorPanel 파일 분리
+
+- `panels/RequestEditorPanel.ts` (2,962줄) → 패널 로직 파일(297줄)과 webview UI 파일로 분리
+- `panels/requestEditorWebview.ts` 신규 생성 — CSS · HTML · JS 상수를 named export로 관리
+- 기능 동작 변경 없음
+
 ### 수정 — Phase 4.5: QA 버그픽스 & 누락 기능 보완
 
 - **B-1**: 저장된 요청 업데이트 — 컬렉션에서 연 요청 저장 시 "현재 요청 업데이트 / 새 요청으로 저장" QuickPick 제공. `store.updateRequest()` 구현

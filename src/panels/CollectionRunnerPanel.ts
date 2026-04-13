@@ -95,7 +95,6 @@ export class CollectionRunnerPanel {
   private constructor(
     private readonly panel: vscode.WebviewPanel,
     private readonly store: ProtoKitStore,
-    private readonly projectId: string,
     private readonly collId: string,
   ) {
     panel.webview.html = buildRunnerHtml();
@@ -104,11 +103,9 @@ export class CollectionRunnerPanel {
   static create(
     context: vscode.ExtensionContext,
     store: ProtoKitStore,
-    projectId: string,
     collId: string,
   ): void {
-    const project = store.getProjects().find(p => p.id === projectId);
-    const collection = project?.collections.find(c => c.id === collId);
+    const collection = store.getCollections().find(c => c.id === collId);
     if (!collection) {
       vscode.window.showWarningMessage('컬렉션을 찾을 수 없습니다.');
       return;
@@ -121,7 +118,7 @@ export class CollectionRunnerPanel {
       { enableScripts: true },
     );
 
-    const runner = new CollectionRunnerPanel(panel, store, projectId, collId);
+    const runner = new CollectionRunnerPanel(panel, store, collId);
     panel.webview.onDidReceiveMessage(
       (msg: { type: string }) => runner.handleMessage(msg),
       null,
@@ -147,8 +144,7 @@ export class CollectionRunnerPanel {
   }
 
   private sendCollectionInfo(): void {
-    const project = this.store.getProjects().find(p => p.id === this.projectId);
-    const collection = project?.collections.find(c => c.id === this.collId);
+    const collection = this.store.getCollections().find(c => c.id === this.collId);
     if (!collection) return;
 
     this.panel.webview.postMessage({
@@ -198,11 +194,10 @@ export class CollectionRunnerPanel {
   }
 
   private async runCollection(): Promise<void> {
-    const project = this.store.getProjects().find(p => p.id === this.projectId);
-    const collection = project?.collections.find(c => c.id === this.collId);
+    const collection = this.store.getCollections().find(c => c.id === this.collId);
     if (!collection || !collection.requests.length) return;
 
-    const envVars = this.store.getActiveEnvironmentVariables();
+    const envVars = this.store.getActiveEnvironmentVariables(this.collId);
     const sub = (s: string) => this.substituteVars(s, envVars);
 
     this.abortController = new AbortController();
@@ -307,8 +302,7 @@ export class CollectionRunnerPanel {
     });
     if (!uri) return;
 
-    const project = this.store.getProjects().find(p => p.id === this.projectId);
-    const collection = project?.collections.find(c => c.id === this.collId);
+    const collection = this.store.getCollections().find(c => c.id === this.collId);
 
     const exportData = {
       collectionName: collection?.name ?? '',

@@ -13,6 +13,9 @@
 │   │   ├── phase2-checklist.md
 │   │   ├── phase3-checklist.md
 │   │   ├── phase4-checklist.md
+│   │   ├── phase4.5-checklist.md
+│   │   ├── phase4.6-checklist.md
+│   │   ├── phase4.7-checklist.md
 │   │   ├── phase5-checklist.md
 │   │   ├── phase6-checklist.md
 │   │   ├── phase7-checklist.md
@@ -23,6 +26,9 @@
 │       ├── phase1.md
 │       ├── phase2.md
 │       ├── phase3.md
+│       ├── phase4.5.md
+│       ├── phase4.6.md
+│       ├── phase4.7.md
 │       ├── phase4.md
 │       ├── phase5.md
 │       ├── phase6.md
@@ -34,7 +40,8 @@
 │   ├── extension.ts
 │   ├── panels
 │   │   ├── CollectionRunnerPanel.ts
-│   │   └── RequestEditorPanel.ts
+│   │   ├── RequestEditorPanel.ts
+│   │   └── requestEditorWebview.ts
 │   ├── protocols
 │   │   └── http
 │   │       └── client.ts
@@ -46,4 +53,4 @@
 ├── tree.txt
 └── tsconfig.json
 
-11 directories, 36 files
+11 directories, 43 files

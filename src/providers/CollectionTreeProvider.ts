@@ -4,12 +4,13 @@ import type { Collection, SavedRequest, ProtoKitStore } from '../storage/store';
 export class CollectionItem extends vscode.TreeItem {
   constructor(
     public readonly collection: Collection,
-    public readonly projectId: string,
   ) {
     super(collection.name, vscode.TreeItemCollapsibleState.Expanded);
     this.contextValue = 'collection';
     this.iconPath = new vscode.ThemeIcon('folder');
     this.id = collection.id;
+    const activeEnv = collection.environments.find(e => e.id === collection.activeEnvironmentId);
+    this.description = activeEnv?.name ?? '';
   }
 }
 
@@ -17,7 +18,6 @@ export class RequestItem extends vscode.TreeItem {
   constructor(
     public readonly request: SavedRequest,
     public readonly collectionId: string,
-    public readonly projectId: string,
   ) {
     super(request.name, vscode.TreeItemCollapsibleState.None);
     this.contextValue = 'request';
@@ -48,13 +48,11 @@ export class CollectionTreeProvider implements vscode.TreeDataProvider<Collectio
 
   getChildren(element?: CollectionTreeNode): CollectionTreeNode[] {
     if (!element) {
-      const project = this.store.getActiveProject();
-      if (!project) return [];
-      return project.collections.map(c => new CollectionItem(c, project.id));
+      return this.store.getCollections().map(c => new CollectionItem(c));
     }
     if (element instanceof CollectionItem) {
       return element.collection.requests.map(
-        r => new RequestItem(r, element.collection.id, element.projectId),
+        r => new RequestItem(r, element.collection.id),
       );
     }
     return [];
