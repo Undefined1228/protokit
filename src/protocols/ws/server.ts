@@ -33,7 +33,7 @@ export class WsServer {
   constructor(private readonly onEvent: (event: WsServerEvent) => void) {}
 
   start(port: number): void {
-    if (this.wss) this.stop();
+    if (this.wss) {this.stop();}
 
     try {
       this.wss = new WebSocketServer({ port });
@@ -68,12 +68,12 @@ export class WsServer {
         this.onEvent({ type: 'message', clientId: id, data: msg, timestamp: Date.now() });
 
         for (const h of this.handlers) {
-          if (!h.enabled || h.trigger !== 'message' || !h.response) continue;
+          if (!h.enabled || h.trigger !== 'message' || !h.response) {continue;}
           if (!h.match) {
             ws.send(h.response);
           } else {
             try {
-              if (new RegExp(h.match).test(msg)) ws.send(h.response);
+              if (new RegExp(h.match).test(msg)) {ws.send(h.response);}
             } catch {}
           }
         }
@@ -87,7 +87,7 @@ export class WsServer {
         for (const h of this.handlers) {
           if (h.enabled && h.trigger === 'disconnect' && h.response) {
             for (const client of this.clients.values()) {
-              if (client.readyState === WebSocket.OPEN) client.send(h.response);
+              if (client.readyState === WebSocket.OPEN) {client.send(h.response);}
             }
           }
         }
@@ -105,7 +105,7 @@ export class WsServer {
 
   stop(): void {
     if (this.wss) {
-      for (const ws of this.clients.values()) ws.terminate();
+      for (const ws of this.clients.values()) {ws.terminate();}
       this.clients.clear();
       this.clientInfo.clear();
       this.wss.close();
@@ -116,12 +116,12 @@ export class WsServer {
 
   send(clientId: string, data: string): void {
     const ws = this.clients.get(clientId);
-    if (ws?.readyState === WebSocket.OPEN) ws.send(data);
+    if (ws?.readyState === WebSocket.OPEN) {ws.send(data);}
   }
 
   broadcast(data: string): void {
     for (const ws of this.clients.values()) {
-      if (ws.readyState === WebSocket.OPEN) ws.send(data);
+      if (ws.readyState === WebSocket.OPEN) {ws.send(data);}
     }
   }
 

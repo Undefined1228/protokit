@@ -124,7 +124,7 @@ export class WebSocketPanel {
       defaultUri,
       filters: { 'Text': ['txt'], 'All Files': ['*'] },
     });
-    if (!uri) return;
+    if (!uri) {return;}
     await vscode.workspace.fs.writeFile(uri, Buffer.from(text, 'utf-8'));
   }
 }

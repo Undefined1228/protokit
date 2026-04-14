@@ -176,7 +176,7 @@ export class ProtoKitStore {
 
   saveRequest(collId: string, req: Omit<SavedRequest, 'id'>): SavedRequest {
     const col = this.findCollection(collId);
-    if (!col) throw new Error('컬렉션을 찾을 수 없습니다.');
+    if (!col) {throw new Error('컬렉션을 찾을 수 없습니다.');}
     const saved: SavedRequest = { id: generateId(), ...req };
     col.requests.push(saved);
     this.persist();
@@ -185,7 +185,7 @@ export class ProtoKitStore {
 
   updateRequest(collId: string, reqId: string, data: Omit<SavedRequest, 'id'>): void {
     const req = this.findRequest(collId, reqId);
-    if (!req) return;
+    if (!req) {return;}
     Object.assign(req, data);
     this.persist();
   }
@@ -203,7 +203,7 @@ export class ProtoKitStore {
   duplicateRequest(collId: string, reqId: string): void {
     const col = this.findCollection(collId);
     const req = col?.requests.find(r => r.id === reqId);
-    if (!col || !req) return;
+    if (!col || !req) {return;}
     const idx = col.requests.indexOf(req);
     const dupe: SavedRequest = { ...req, id: generateId(), name: req.name + ' 복사본' };
     col.requests.splice(idx + 1, 0, dupe);
@@ -212,10 +212,10 @@ export class ProtoKitStore {
 
   moveRequest(collId: string, reqId: string, dir: 'up' | 'down'): void {
     const col = this.findCollection(collId);
-    if (!col) return;
+    if (!col) {return;}
     const idx = col.requests.findIndex(r => r.id === reqId);
     const newIdx = dir === 'up' ? idx - 1 : idx + 1;
-    if (idx < 0 || newIdx < 0 || newIdx >= col.requests.length) return;
+    if (idx < 0 || newIdx < 0 || newIdx >= col.requests.length) {return;}
     [col.requests[idx], col.requests[newIdx]] = [col.requests[newIdx], col.requests[idx]];
     this.persist();
   }
@@ -224,10 +224,10 @@ export class ProtoKitStore {
 
   createEnvironment(collId: string, name: string): Environment {
     const col = this.findCollection(collId);
-    if (!col) throw new Error('컬렉션을 찾을 수 없습니다.');
+    if (!col) {throw new Error('컬렉션을 찾을 수 없습니다.');}
     const env: Environment = { id: generateId(), name, variables: {} };
     col.environments.push(env);
-    if (!col.activeEnvironmentId) col.activeEnvironmentId = env.id;
+    if (!col.activeEnvironmentId) {col.activeEnvironmentId = env.id;}
     this.persist();
     return env;
   }
@@ -239,7 +239,7 @@ export class ProtoKitStore {
 
   deleteEnvironment(collId: string, envId: string): void {
     const col = this.findCollection(collId);
-    if (!col) return;
+    if (!col) {return;}
     col.environments = col.environments.filter(e => e.id !== envId);
     if (col.activeEnvironmentId === envId) {
       col.activeEnvironmentId = col.environments[0]?.id ?? null;
@@ -258,9 +258,9 @@ export class ProtoKitStore {
   }
 
   getActiveEnvironmentVariables(collId?: string): Record<string, string> {
-    if (!collId) return {};
+    if (!collId) {return {};}
     const col = this.findCollection(collId);
-    if (!col || !col.activeEnvironmentId) return {};
+    if (!col || !col.activeEnvironmentId) {return {};}
     return col.environments.find(e => e.id === col.activeEnvironmentId)?.variables ?? {};
   }
 

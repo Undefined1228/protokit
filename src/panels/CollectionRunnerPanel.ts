@@ -22,7 +22,7 @@ interface RequestRunResult {
 }
 
 function getPath(obj: unknown, path: string): unknown {
-  if (obj === null || obj === undefined || !path) return undefined;
+  if (obj === null || obj === undefined || !path) {return undefined;}
   return path.split('.').reduce((o: unknown, k) => {
     if (o && typeof o === 'object' && k in (o as Record<string, unknown>)) {
       return (o as Record<string, unknown>)[k];
@@ -145,7 +145,7 @@ export class CollectionRunnerPanel {
 
   private sendCollectionInfo(): void {
     const collection = this.store.getCollections().find(c => c.id === this.collId);
-    if (!collection) return;
+    if (!collection) {return;}
 
     this.panel.webview.postMessage({
       type: 'collectionInfo',
@@ -178,7 +178,7 @@ export class CollectionRunnerPanel {
     const authType = req.authType ?? 'none';
     if (authType === 'bearer') {
       const token = sub(req.authToken ?? '');
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      if (token) {headers['Authorization'] = `Bearer ${token}`;}
     } else if (authType === 'basic') {
       const username = sub(req.authBasicUsername ?? '');
       const password = sub(req.authBasicPassword ?? '');
@@ -187,15 +187,15 @@ export class CollectionRunnerPanel {
       const key = sub(req.authApiKeyKey ?? '');
       const value = sub(req.authApiKeyValue ?? '');
       if (key) {
-        if (req.authApiKeyIn === 'query') queryParams[key] = value;
-        else headers[key] = value;
+        if (req.authApiKeyIn === 'query') {queryParams[key] = value;}
+        else {headers[key] = value;}
       }
     }
   }
 
   private async runCollection(): Promise<void> {
     const collection = this.store.getCollections().find(c => c.id === this.collId);
-    if (!collection || !collection.requests.length) return;
+    if (!collection || !collection.requests.length) {return;}
 
     const envVars = this.store.getActiveEnvironmentVariables(this.collId);
     const sub = (s: string) => this.substituteVars(s, envVars);
@@ -204,17 +204,17 @@ export class CollectionRunnerPanel {
     const results: RequestRunResult[] = [];
 
     for (let i = 0; i < collection.requests.length; i++) {
-      if (this.abortController.signal.aborted) break;
+      if (this.abortController.signal.aborted) {break;}
 
       const req = collection.requests[i];
       this.panel.webview.postMessage({ type: 'requestStart', payload: { index: i } });
 
       const headers: Record<string, string> = {};
       for (const h of req.headers ?? []) {
-        if (h.enabled && h.key.trim()) headers[sub(h.key.trim())] = sub(h.value);
+        if (h.enabled && h.key.trim()) {headers[sub(h.key.trim())] = sub(h.value);}
       }
-      if (req.bodyType === 'json') headers['Content-Type'] = 'application/json';
-      else if (req.bodyType === 'urlencoded') headers['Content-Type'] = 'application/x-www-form-urlencoded';
+      if (req.bodyType === 'json') {headers['Content-Type'] = 'application/json';}
+      else if (req.bodyType === 'urlencoded') {headers['Content-Type'] = 'application/x-www-form-urlencoded';}
 
       const queryParams: Record<string, string> = {};
       this.applyAuth(headers, queryParams, req, sub);
@@ -227,7 +227,7 @@ export class CollectionRunnerPanel {
       if (Object.keys(queryParams).length > 0) {
         try {
           const urlObj = new URL(url.startsWith('http') ? url : 'http://placeholder' + url);
-          for (const [k, v] of Object.entries(queryParams)) urlObj.searchParams.set(k, v);
+          for (const [k, v] of Object.entries(queryParams)) {urlObj.searchParams.set(k, v);}
           url = url.startsWith('http') ? urlObj.toString() : urlObj.pathname + urlObj.search;
         } catch { /* ignore */ }
       }
@@ -274,7 +274,7 @@ export class CollectionRunnerPanel {
         results.push(result);
         this.panel.webview.postMessage({ type: 'requestDone', payload: result });
       } catch (err) {
-        if (this.abortController.signal.aborted) break;
+        if (this.abortController.signal.aborted) {break;}
         const result: RequestRunResult = {
           index: i,
           name: req.name,
@@ -300,7 +300,7 @@ export class CollectionRunnerPanel {
       defaultUri,
       filters: { 'JSON': ['json'] },
     });
-    if (!uri) return;
+    if (!uri) {return;}
 
     const collection = this.store.getCollections().find(c => c.id === this.collId);
 

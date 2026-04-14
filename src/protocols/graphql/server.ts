@@ -23,7 +23,7 @@ export class GqlServer {
   constructor(private readonly onEvent: (event: GqlServerEvent) => void) {}
 
   start(port: number, sdl: string, resolvers: GqlResolverDef[]): void {
-    if (this.httpServer) this.stop();
+    if (this.httpServer) {this.stop();}
     this.resolverDefs = resolvers;
 
     try {
@@ -100,7 +100,7 @@ export class GqlServer {
   }
 
   publishEvent(field: string, payload: string): void {
-    if (!this.wss) return;
+    if (!this.wss) {return;}
     const message = JSON.stringify({
       type: 'next',
       payload: { data: { [field]: payload } },

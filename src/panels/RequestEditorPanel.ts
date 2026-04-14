@@ -116,7 +116,7 @@ export class RequestEditorPanel {
         ],
         { placeHolder: '저장 방식 선택' },
       );
-      if (!choice) return;
+      if (!choice) {return;}
 
       if (choice.value === 'update') {
         this.store.updateRequest(
@@ -142,7 +142,7 @@ export class RequestEditorPanel {
       );
       if (choice) {
         const name = await vscode.window.showInputBox({ prompt: '새 컬렉션 이름' });
-        if (!name?.trim()) return;
+        if (!name?.trim()) {return;}
         this.store.createCollection(name.trim());
         collections = this.store.getCollections();
       } else {
@@ -154,11 +154,11 @@ export class RequestEditorPanel {
       collections.map(c => ({ label: c.name, id: c.id })),
       { placeHolder: '저장할 컬렉션 선택' },
     );
-    if (!colPick) return;
+    if (!colPick) {return;}
 
     const defaultName = payload.method + '  ' + (payload.url || '새 요청');
     const name = await vscode.window.showInputBox({ prompt: '요청 이름', value: defaultName });
-    if (!name?.trim()) return;
+    if (!name?.trim()) {return;}
 
     this.store.saveRequest(colPick.id, { name: name.trim(), ...payload });
     vscode.window.showInformationMessage(`"${name.trim()}" 요청이 저장되었습니다.`);
@@ -174,7 +174,7 @@ export class RequestEditorPanel {
       defaultUri,
       filters: { 'JSON': ['json'], 'Text': ['txt'], 'All Files': ['*'] },
     });
-    if (!uri) return;
+    if (!uri) {return;}
     await vscode.workspace.fs.writeFile(uri, Buffer.from(payload.body, 'utf-8'));
   }
 

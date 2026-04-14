@@ -93,7 +93,7 @@ async function doRequest(
   return new Promise<HttpResponse>((resolve, reject) => {
     let settled = false;
     const done = (fn: () => void) => {
-      if (settled) return;
+      if (settled) {return;}
       settled = true;
       fn();
     };
@@ -264,7 +264,7 @@ function createHttpsProxyAgent(
       let buf = '';
       const onData = (chunk: Buffer) => {
         buf += chunk.toString('ascii');
-        if (!buf.includes('\r\n\r\n')) return;
+        if (!buf.includes('\r\n\r\n')) {return;}
         socket.removeListener('data', onData);
 
         if (!buf.startsWith('HTTP/1.1 200') && !buf.startsWith('HTTP/1.0 200')) {
@@ -294,7 +294,7 @@ function injectCookies(
   headers: Record<string, string>,
   cookies?: Record<string, string>,
 ): Record<string, string> {
-  if (!cookies || Object.keys(cookies).length === 0) return headers;
+  if (!cookies || Object.keys(cookies).length === 0) {return headers;}
   const cookieStr = Object.entries(cookies).map(([n, v]) => `${n}=${v}`).join('; ');
   const existing = headers['cookie'] || headers['Cookie'] || '';
   return { ...headers, cookie: existing ? existing + '; ' + cookieStr : cookieStr };
@@ -323,10 +323,10 @@ function parseSingleCookie(header: string, defaultDomain: string): ParsedCookie 
     const attrName = (eqPos >= 0 ? part.slice(0, eqPos) : part).trim().toLowerCase();
     const attrVal = eqPos >= 0 ? part.slice(eqPos + 1).trim() : '';
 
-    if (attrName === 'domain' && attrVal) domain = attrVal.replace(/^\./, '');
-    else if (attrName === 'path' && attrVal) path = attrVal;
-    else if (attrName === 'httponly') httpOnly = true;
-    else if (attrName === 'secure') secure = true;
+    if (attrName === 'domain' && attrVal) {domain = attrVal.replace(/^\./, '');}
+    else if (attrName === 'path' && attrVal) {path = attrVal;}
+    else if (attrName === 'httponly') {httpOnly = true;}
+    else if (attrName === 'secure') {secure = true;}
   }
 
   return { name, value, domain, path, httpOnly, secure };

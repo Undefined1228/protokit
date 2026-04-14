@@ -27,7 +27,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.commands.registerCommand('protokit.newCollection', async () => {
       const name = await vscode.window.showInputBox({ prompt: '새 컬렉션 이름' });
-      if (!name?.trim()) return;
+      if (!name?.trim()) {return;}
       store.createCollection(name.trim());
     }),
 
@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
         prompt: '컬렉션 이름 변경',
         value: item.collection.name,
       });
-      if (!name?.trim() || name.trim() === item.collection.name) return;
+      if (!name?.trim() || name.trim() === item.collection.name) {return;}
       store.renameCollection(item.collection.id, name.trim());
     }),
 
@@ -46,7 +46,7 @@ export function activate(context: vscode.ExtensionContext) {
         { modal: true },
         '삭제',
       );
-      if (confirmed !== '삭제') return;
+      if (confirmed !== '삭제') {return;}
       store.deleteCollection(item.collection.id);
     }),
 
@@ -77,7 +77,7 @@ export function activate(context: vscode.ExtensionContext) {
         prompt: '요청 이름 변경',
         value: item.request.name,
       });
-      if (!name?.trim() || name.trim() === item.request.name) return;
+      if (!name?.trim() || name.trim() === item.request.name) {return;}
       store.renameRequest(item.collectionId, item.request.id, name.trim());
     }),
 
@@ -87,7 +87,7 @@ export function activate(context: vscode.ExtensionContext) {
         { modal: true },
         '삭제',
       );
-      if (confirmed !== '삭제') return;
+      if (confirmed !== '삭제') {return;}
       store.deleteRequest(item.collectionId, item.request.id);
     }),
 
@@ -135,7 +135,7 @@ export function activate(context: vscode.ExtensionContext) {
         { modal: true },
         '삭제',
       );
-      if (confirmed === '삭제') store.clearHistory();
+      if (confirmed === '삭제') {store.clearHistory();}
     }),
 
     // ── 환경변수 ──────────────────────────────────────────────
@@ -154,7 +154,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 async function manageEnvironments(store: ProtoKitStore, item: CollectionItem): Promise<void> {
   const col = store.getCollections().find(c => c.id === item.collection.id);
-  if (!col) return;
+  if (!col) {return;}
 
   const picks: (vscode.QuickPickItem & { id?: string })[] = [
     ...col.environments.map(e => ({
@@ -167,17 +167,17 @@ async function manageEnvironments(store: ProtoKitStore, item: CollectionItem): P
   ];
 
   const pick = await vscode.window.showQuickPick(picks, { placeHolder: '환경 선택 또는 관리' });
-  if (!pick) return;
+  if (!pick) {return;}
 
   if (pick.label === '$(add) 새 환경 추가') {
     const name = await vscode.window.showInputBox({ prompt: '환경 이름 (예: dev, staging, prod)' });
-    if (!name?.trim()) return;
+    if (!name?.trim()) {return;}
     store.createEnvironment(col.id, name.trim());
     return;
   }
 
   const env = col.environments.find(e => e.id === pick.id);
-  if (!env) return;
+  if (!env) {return;}
 
   const action = await vscode.window.showQuickPick(
     [
@@ -189,7 +189,7 @@ async function manageEnvironments(store: ProtoKitStore, item: CollectionItem): P
     { placeHolder: `"${env.name}" 환경` },
   );
 
-  if (!action) return;
+  if (!action) {return;}
 
   if (action.id === 'activate') {
     store.switchEnvironment(col.id, env.id);
@@ -198,7 +198,7 @@ async function manageEnvironments(store: ProtoKitStore, item: CollectionItem): P
     await editEnvironmentVariables(store, col.id, env.id, env.name);
   } else if (action.id === 'rename') {
     const name = await vscode.window.showInputBox({ prompt: '환경 이름 변경', value: env.name });
-    if (!name?.trim() || name.trim() === env.name) return;
+    if (!name?.trim() || name.trim() === env.name) {return;}
     store.renameEnvironment(col.id, env.id, name.trim());
   } else if (action.id === 'delete') {
     const confirmed = await vscode.window.showWarningMessage(
@@ -206,7 +206,7 @@ async function manageEnvironments(store: ProtoKitStore, item: CollectionItem): P
       { modal: true },
       '삭제',
     );
-    if (confirmed === '삭제') store.deleteEnvironment(col.id, env.id);
+    if (confirmed === '삭제') {store.deleteEnvironment(col.id, env.id);}
   }
 }
 
@@ -219,7 +219,7 @@ async function editEnvironmentVariables(
   while (true) {
     const col = store.getCollections().find(c => c.id === collId);
     const env = col?.environments.find(e => e.id === envId);
-    if (!env) return;
+    if (!env) {return;}
 
     const entries = Object.entries(env.variables);
     const items: (vscode.QuickPickItem & { key?: string })[] = [
@@ -232,13 +232,13 @@ async function editEnvironmentVariables(
       placeHolder: `${envName} — 환경변수 편집`,
     });
 
-    if (!pick || pick.label === '$(check) 완료') return;
+    if (!pick || pick.label === '$(check) 완료') {return;}
 
     if (pick.label === '$(add) 새 변수 추가') {
       const key = await vscode.window.showInputBox({ prompt: '변수 이름' });
-      if (!key?.trim()) continue;
+      if (!key?.trim()) {continue;}
       const value = await vscode.window.showInputBox({ prompt: `"${key.trim()}" 값` });
-      if (value === undefined) continue;
+      if (value === undefined) {continue;}
       const vars = { ...env.variables, [key.trim()]: value };
       store.updateEnvironmentVariables(collId, envId, vars);
     } else if (pick.key) {
@@ -250,13 +250,13 @@ async function editEnvironmentVariables(
         ],
         { placeHolder: `"${varKey}" 변수` },
       );
-      if (!action) continue;
+      if (!action) {continue;}
       if (action.id === 'edit') {
         const value = await vscode.window.showInputBox({
           prompt: `"${varKey}" 값`,
           value: env.variables[varKey],
         });
-        if (value === undefined) continue;
+        if (value === undefined) {continue;}
         store.updateEnvironmentVariables(collId, envId, { ...env.variables, [varKey]: value });
       } else if (action.id === 'delete') {
         const vars = { ...env.variables };

@@ -66,9 +66,9 @@ export class WsClient {
   }
 
   get status(): WsClientStatus {
-    if (!this.ws) return 'disconnected';
-    if (this.ws.readyState === WebSocket.OPEN) return 'connected';
-    if (this.ws.readyState === WebSocket.CONNECTING) return 'connecting';
+    if (!this.ws) {return 'disconnected';}
+    if (this.ws.readyState === WebSocket.OPEN) {return 'connected';}
+    if (this.ws.readyState === WebSocket.CONNECTING) {return 'connecting';}
     return 'disconnected';
   }
 }
