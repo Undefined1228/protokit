@@ -1,5 +1,23 @@
 # 변경 이력
 
+## [0.5.0] - 2026-04-14
+
+### 추가 — Phase 9: TCP / UDP 소켓
+
+- `protocols/tcp/client.ts` 신규 — Node.js `net` 기반 TCP 클라이언트 (`TcpClient`), 연결 상태 추적, 수신 데이터 스트리밍, 연결/해제/전송
+- `protocols/tcp/server.ts` 신규 — 로컬 TCP 서버 (`TcpServer`), 다중 클라이언트 관리, 특정 클라이언트 전송 / 전체 broadcast, 자동 응답 규칙 (문자열 매치 → 응답)
+- `protocols/udp/client.ts` 신규 — Node.js `dgram` 기반 UDP 클라이언트 (`UdpClient`), 로컬 포트 바인딩, 임의 주소로 패킷 전송, 수신 패킷 스트리밍
+- `protocols/udp/server.ts` 신규 — 로컬 UDP 서버 (`UdpServer`), 수신 패킷 로그, 특정 주소 전송 / 255.255.255.255 broadcast, 자동 응답 규칙
+- `panels/TCPPanel.ts` 신규 — TCP 클라이언트/서버 연결 관리 및 webview 메시지 라우팅
+- `panels/UDPPanel.ts` 신규 — UDP 클라이언트/서버 연결 관리 및 webview 메시지 라우팅
+- `panels/tcpWebview.ts` 신규 — TCP UI (CSS · HTML · JS)
+- `panels/udpWebview.ts` 신규 — UDP UI (CSS · HTML · JS)
+- **TCP 클라이언트 탭**: Host · Port 입력, Connect/Disconnect 버튼, 연결 상태 뱃지, 수신 스트림 뷰어 (timestamp · 방향 · payload), 표시 인코딩 선택 (UTF-8 / Hex / Base64), 입력 인코딩 선택 후 전송, 로그 저장
+- **TCP 서버 탭**: 포트 설정 후 시작/중지, 연결된 클라이언트 목록, 특정 클라이언트 전송 / 전체 broadcast, 자동 응답 규칙 편집기 (매치 문자열 · 응답 · 인코딩 · 활성화 토글)
+- **UDP 클라이언트 탭**: 소켓 시작/중지 (랜덤 로컬 포트 표시), 임의 Host · Port로 패킷 전송, 수신 패킷 뷰어 (timestamp · 송신지 · payload), 인코딩 선택
+- **UDP 서버 탭**: 포트 바인딩 후 시작/중지, 수신 패킷 로그 (송신지 포함), 특정 주소 전송 / broadcast, 자동 응답 규칙 편집기
+- `protokit.newTCP`, `protokit.newUDP` 커맨드 추가 — `protokit.newConnectionMenu` 서브메뉴에 등록
+
 ## [0.4.0] - 2026-04-14
 
 ### 추가 — Phase 8: Socket.IO 클라이언트 & 서버

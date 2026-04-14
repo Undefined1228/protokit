@@ -79,6 +79,23 @@ export class RequestEditorPanel {
       null,
       context.subscriptions,
     );
+    store.onDidChange(() => editor.pushEnvVars(), context.subscriptions);
+  }
+
+  private getEnvVars(): Record<string, string> {
+    if (this.initialCollId) {
+      return this.store.getActiveEnvironmentVariables(this.initialCollId);
+    }
+    for (const col of this.store.getCollections()) {
+      if (col.activeEnvironmentId) {
+        return this.store.getActiveEnvironmentVariables(col.id);
+      }
+    }
+    return {};
+  }
+
+  private pushEnvVars(): void {
+    this.panel.webview.postMessage({ type: 'setEnvVars', payload: this.getEnvVars() });
   }
 
   private handleMessage(msg: { type: string; payload: unknown }): void {
@@ -99,10 +116,7 @@ export class RequestEditorPanel {
         if (this.initialRequest) {
           this.panel.webview.postMessage({ type: 'loadRequest', payload: this.initialRequest });
         }
-        this.panel.webview.postMessage({
-          type: 'setEnvVars',
-          payload: this.store.getActiveEnvironmentVariables(this.initialCollId),
-        });
+        this.pushEnvVars();
         break;
     }
   }
@@ -214,7 +228,7 @@ export class RequestEditorPanel {
     this.abortController?.abort();
     this.abortController = new AbortController();
 
-    const envVars = this.store.getActiveEnvironmentVariables(this.initialCollId);
+    const envVars = this.getEnvVars();
     const sub = (s: string) => this.substituteVars(s, envVars);
 
     const substitutedHeaders: Record<string, string> = Object.fromEntries(

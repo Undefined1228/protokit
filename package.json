@@ -87,6 +87,18 @@
         "icon": "$(plug)"
       },
       {
+        "command": "protokit.newTCP",
+        "title": "새 TCP",
+        "category": "ProtoKit",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "protokit.newUDP",
+        "title": "새 UDP",
+        "category": "ProtoKit",
+        "icon": "$(radio-tower)"
+      },
+      {
         "command": "protokit.newCollection",
         "title": "새 컬렉션",
         "category": "ProtoKit",
@@ -225,6 +237,14 @@
         {
           "command": "protokit.newSocketIO",
           "group": "1@5"
+        },
+        {
+          "command": "protokit.newTCP",
+          "group": "1@6"
+        },
+        {
+          "command": "protokit.newUDP",
+          "group": "1@7"
         }
       ],
       "view/item/context": [
