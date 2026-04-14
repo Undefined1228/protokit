@@ -75,6 +75,12 @@
         "icon": "$(symbol-misc)"
       },
       {
+        "command": "protokit.newSSE",
+        "title": "새 SSE",
+        "category": "ProtoKit",
+        "icon": "$(radio-tower)"
+      },
+      {
         "command": "protokit.newCollection",
         "title": "새 컬렉션",
         "category": "ProtoKit",
@@ -165,6 +171,11 @@
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "protokit.newSSE",
+          "when": "view == protokit.collections",
+          "group": "navigation@8"
+        },
         {
           "command": "protokit.newGraphQL",
           "when": "view == protokit.collections",

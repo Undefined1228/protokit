@@ -1,5 +1,17 @@
 # 변경 이력
 
+## [0.3.0] - 2026-04-14
+
+### 추가 — Phase 7: SSE (Server-Sent Events) 클라이언트 & 서버
+
+- `protocols/sse/client.ts` 신규 — Node.js 내장 `http`/`https` 기반 SSE 클라이언트 (`SseClient`), SSE 스트림 파싱, Last-Event-ID 추적, 자동 재연결 (retry 지원)
+- `protocols/sse/server.ts` 신규 — 로컬 SSE HTTP 서버 (`SseServer`), `text/event-stream` 응답, 연결된 클라이언트 관리, 반복 전송 스케줄
+- `panels/SSEPanel.ts` 신규 — 클라이언트/서버 연결 관리 및 webview 메시지 라우팅
+- `panels/sseWebview.ts` 신규 — SSE UI (CSS · HTML · JS)
+- **클라이언트 탭**: URL 입력, 연결 헤더 설정, Connect/Disconnect 버튼, 연결 상태 뱃지, 수신 이벤트 스트림 뷰어 (timestamp · event type · data · id), 이벤트 타입별 필터링, Last-Event-ID 표시, 로그 저장
+- **서버 탭**: 포트 설정, 로컬 SSE 서버 시작/중지, 연결된 클라이언트 목록, 이벤트 수동 전송 (event type · data · id), 전체 클라이언트 broadcast, 반복 전송 스케줄 (N초 간격 자동 발행)
+- `protokit.newSSE` 커맨드 추가 — 컬렉션 뷰 툴바에서 접근 가능
+
 ## [0.2.0] - 2026-04-14
 
 ### 추가 — Phase 6: GraphQL 클라이언트 & 서버
