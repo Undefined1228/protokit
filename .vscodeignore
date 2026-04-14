@@ -9,3 +9,7 @@ vsc-extension-quickstart.md
 **/.eslintrc.json
 **/*.map
 **/*.ts
+plans/**
+tree.txt
+.claude/**
+eslint.config.mjs
