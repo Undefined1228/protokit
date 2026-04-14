@@ -3,7 +3,8 @@
   "publisher": "ach9948",
   "displayName": "ProtoKit",
   "description": "REST API and multi-protocol testing tool for VS Code",
-  "version": "0.0.1",
+  "version": "0.2.0",
+  "icon": "media/icon.png",
   "license": "MIT",
   "keywords": [
     "rest",
@@ -66,6 +67,12 @@
         "title": "새 WebSocket",
         "category": "ProtoKit",
         "icon": "$(broadcast)"
+      },
+      {
+        "command": "protokit.newGraphQL",
+        "title": "새 GraphQL",
+        "category": "ProtoKit",
+        "icon": "$(symbol-misc)"
       },
       {
         "command": "protokit.newCollection",
@@ -158,6 +165,11 @@
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "protokit.newGraphQL",
+          "when": "view == protokit.collections",
+          "group": "navigation@7"
+        },
         {
           "command": "protokit.newWebSocket",
           "when": "view == protokit.collections",
@@ -264,6 +276,8 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
+    "graphql": "^16.13.2",
+    "graphql-ws": "^6.0.8",
     "ws": "^8.20.0"
   }
 }

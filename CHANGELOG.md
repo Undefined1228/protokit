@@ -1,8 +1,21 @@
 # 변경 이력
 
-## [Unreleased]
+## [0.2.0] - 2026-04-14
 
-### 기능 — Phase 5: WebSocket 클라이언트 & 서버
+### 추가 — Phase 6: GraphQL 클라이언트 & 서버
+
+- `protocols/graphql/client.ts` 신규 — HTTP(Query/Mutation) 및 `graphql-ws` 기반 Subscription 클라이언트 (`GqlClient`), Schema Introspection 지원
+- `protocols/graphql/server.ts` 신규 — 로컬 GraphQL HTTP 서버 (`GqlServer`), SDL 기반 스키마 빌드, Resolver 정의, WebSocket Subscription 지원
+- `panels/GraphQLPanel.ts` 신규 — 클라이언트/서버 연결 관리 및 webview 메시지 라우팅, 내장 Playground 창 열기
+- `panels/graphqlWebview.ts` 신규 — GraphQL UI (CSS · HTML · JS)
+- **클라이언트 탭**: Endpoint URL, Operation 선택(Query/Mutation/Subscription), Query 편집기, Variables 편집기(JSON), 요청 헤더 설정, Schema Introspection(스키마 트리 뷰), 응답 JSON 뷰어, Subscription 실시간 스트림 뷰
+- **서버 탭**: 포트 설정, 로컬 GraphQL 서버 시작/중지, SDL 스키마 편집기, Resolver 정의(필드·반환값), Subscription 이벤트 수동 발행, 내장 Playground UI(별도 webview 패널)
+- `protokit.newGraphQL` 커맨드 추가 — 컬렉션 뷰 툴바에서 접근 가능
+- `graphql`, `graphql-ws` npm 패키지 의존성 추가
+
+## [0.1.0] - 2026-04-13
+
+### 추가 — Phase 5: WebSocket 클라이언트 & 서버
 
 - `protocols/ws/client.ts` 신규 — `ws` 패키지 기반 WebSocket 클라이언트 래퍼 (`WsClient`)
 - `protocols/ws/server.ts` 신규 — 로컬 WebSocket 서버 래퍼 (`WsServer`), 이벤트 핸들러 규칙 지원
@@ -52,9 +65,8 @@
 - Basic Auth: username / password 입력 → Base64 인코딩 후 `Authorization: Basic ...` 헤더 자동 삽입
 - API Key: key / value 입력 + 삽입 위치 선택 (Header / Query Param)
 
-### 추가 — Phase 2: 프로젝트 & 컬렉션 & 환경변수
+### 추가 — Phase 2: 컬렉션 & 환경변수
 
-- 프로젝트 생성 · 이름 변경 · 삭제 · 전환
 - 컬렉션 생성 · 이름 변경 · 삭제 · TreeView 표시
 - 요청 저장 · 이름 변경 · 삭제 · 순서 변경 · 복제 · 복원
 - 컬렉션 / 히스토리 요청 검색
@@ -79,12 +91,3 @@
 - 초기 프로젝트 설정
 - Activity Bar 기반 UI 구조 설계
 - Phase 1~9 개발 로드맵 수립
-  - Phase 1: REST API 기본 테스트
-  - Phase 2: 프로젝트 · 컬렉션 · 환경변수
-  - Phase 3: 인증 확장 (Basic Auth, API Key)
-  - Phase 4: 응답 검증 · Collection Runner
-  - Phase 5: WebSocket 클라이언트 · 서버
-  - Phase 6: GraphQL 클라이언트 · 서버
-  - Phase 7: SSE 클라이언트 · 서버
-  - Phase 8: Socket.IO 클라이언트 · 서버
-  - Phase 9: TCP · UDP 소켓 클라이언트 · 서버

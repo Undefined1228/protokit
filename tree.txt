@@ -4,6 +4,7 @@
 ├── eslint.config.mjs
 ├── LICENSE
 ├── media
+│   ├── icon.png
 │   └── protokit.svg
 ├── package-lock.json
 ├── package.json
@@ -40,11 +41,16 @@
 │   ├── extension.ts
 │   ├── panels
 │   │   ├── CollectionRunnerPanel.ts
+│   │   ├── GraphQLPanel.ts
+│   │   ├── graphqlWebview.ts
 │   │   ├── RequestEditorPanel.ts
 │   │   ├── requestEditorWebview.ts
 │   │   ├── WebSocketPanel.ts
 │   │   └── webSocketWebview.ts
 │   ├── protocols
+│   │   ├── graphql
+│   │   │   ├── client.ts
+│   │   │   └── server.ts
 │   │   ├── http
 │   │   │   └── client.ts
 │   │   └── ws
@@ -58,4 +64,4 @@
 ├── tree.txt
 └── tsconfig.json
 
-12 directories, 47 files
+13 directories, 52 files

@@ -14,27 +14,27 @@
 
 ## 클라이언트
 
-- [ ] Endpoint URL 입력
-- [ ] Operation 선택: Query / Mutation / Subscription
-- [ ] Query 편집기: SDL 구문 강조
-- [ ] Variables 편집기: JSON 입력
-- [ ] Headers 설정
-- [ ] Schema Introspection: 엔드포인트에서 스키마 자동 조회
-- [ ] Schema Introspection: 필드 자동완성
-- [ ] 응답 뷰어: JSON 포맷팅
-- [ ] Subscription: 실시간 이벤트 스트림 표시
+- [x] Endpoint URL 입력
+- [x] Operation 선택: Query / Mutation / Subscription
+- [x] Query 편집기: SDL 구문 강조
+- [x] Variables 편집기: JSON 입력
+- [x] Headers 설정
+- [x] Schema Introspection: 엔드포인트에서 스키마 자동 조회
+- [x] Schema Introspection: 필드 자동완성
+- [x] 응답 뷰어: JSON 포맷팅
+- [x] Subscription: 실시간 이벤트 스트림 표시
 
 ## 서버
 
-- [ ] 포트 설정
-- [ ] 로컬 GraphQL 서버 시작 / 중지
-- [ ] Schema 정의 (SDL 편집기)
-- [ ] Resolver 정의 (필드별 반환값 설정)
-- [ ] Subscription 이벤트 수동 발행 (테스트용)
-- [ ] 내장 Playground UI (브라우저 없이 쿼리 테스트 가능)
+- [x] 포트 설정
+- [x] 로컬 GraphQL 서버 시작 / 중지
+- [x] Schema 정의 (SDL 편집기)
+- [x] Resolver 정의 (필드별 반환값 설정)
+- [x] Subscription 이벤트 수동 발행 (테스트용)
+- [x] 내장 Playground UI (브라우저 없이 쿼리 테스트 가능)
 
 ---
 
 ## 완료 후 처리
 
-- [ ] `CHANGELOG.md`에 해당 페이즈 변경 내용 추가
+- [x] `CHANGELOG.md`에 해당 페이즈 변경 내용 추가
