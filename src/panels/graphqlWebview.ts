@@ -1,3 +1,6 @@
+import { AUTOCOMPLETE_CSS, AUTOCOMPLETE_JS } from './autocomplete';
+import { SEARCH_CSS, SEARCH_JS } from './search';
+
 export const CSS = `
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -276,7 +279,7 @@ textarea { resize: vertical; }
 }
 .req-item .ts { font-size: 10px; opacity: 0.5; }
 .req-item .qtext { opacity: 0.9; white-space: pre-wrap; word-break: break-all; }
-`;
+${AUTOCOMPLETE_CSS}${SEARCH_CSS}`;
 
 export const HTML = `
 <div class="tab-bar">
@@ -410,6 +413,8 @@ type Subscription {
 `;
 
 export const JS = `
+${AUTOCOMPLETE_JS}
+${SEARCH_JS}
 const vscode = acquireVsCodeApi();
 
 /* ── 탭 전환 ── */
@@ -572,9 +577,17 @@ document.getElementById('btnClearLog').addEventListener('click', () => {
   document.getElementById('reqLog').innerHTML = '';
 });
 
+window.__ac.init(['endpoint']);
+window.__search.setTargets(['responseBody', 'streamList', 'reqLog']);
+vscode.postMessage({ type: 'ready' });
+
 /* ── 메시지 수신 ── */
 window.addEventListener('message', e => {
   const { type, payload } = e.data;
+
+  if (type === 'setEnvVars') {
+    window.__ac.setVars(payload);
+  }
 
   if (type === 'gql:data') {
     if (subscriptionActive) {

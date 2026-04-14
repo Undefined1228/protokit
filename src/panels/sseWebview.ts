@@ -1,3 +1,6 @@
+import { AUTOCOMPLETE_CSS, AUTOCOMPLETE_JS } from './autocomplete';
+import { SEARCH_CSS, SEARCH_JS } from './search';
+
 export const CSS = `
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -363,7 +366,7 @@ input::placeholder, textarea::placeholder {
   color: var(--vscode-descriptionForeground);
 }
 .schedule-status.running { color: #4caf50; }
-`;
+${AUTOCOMPLETE_CSS}${SEARCH_CSS}`;
 
 export const HTML = `
 <div class="tab-bar">
@@ -489,6 +492,8 @@ export const HTML = `
 `;
 
 export const JS = `
+${AUTOCOMPLETE_JS}
+${SEARCH_JS}
 const vscode = acquireVsCodeApi();
 
 // ── 탭 전환 ──────────────────────────────────────────────
@@ -810,10 +815,18 @@ document.getElementById('btn-srv-save').addEventListener('click', () => {
   vscode.postMessage({ type: 'sse:saveLog', payload: { text } });
 });
 
+window.__ac.init(['sse-url']);
+window.__search.setTargets(['client-stream', 'server-stream']);
+vscode.postMessage({ type: 'ready' });
+
 // ── 확장 메시지 수신 ──────────────────────────────────────
 window.addEventListener('message', e => {
   const { type, payload } = e.data;
   switch (type) {
+    case 'setEnvVars':
+      window.__ac.setVars(payload);
+      break;
+
     case 'sse:status':
       if (payload.status === 'connecting') {
         setClientStatus('connecting', '연결 중...');

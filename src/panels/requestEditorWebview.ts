@@ -1,3 +1,6 @@
+import { AUTOCOMPLETE_CSS, AUTOCOMPLETE_JS } from './autocomplete';
+import { SEARCH_CSS, SEARCH_JS } from './search';
+
 export const CSS = `
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -905,7 +908,7 @@ table.kv-table tbody td:last-child  { text-align: center; }
   color: var(--vscode-editor-foreground);
   font-family: var(--vscode-editor-font-family, monospace);
 }
-`;
+${AUTOCOMPLETE_CSS}${SEARCH_CSS}`;
 
 export const HTML = `
 <div class="request-bar">
@@ -1180,6 +1183,8 @@ export const HTML = `
 `;
 
 export const JS = `
+${AUTOCOMPLETE_JS}
+${SEARCH_JS}
 const vscode = acquireVsCodeApi();
 
 /* ── 환경변수 ──────────────────────────────────────────────── */
@@ -1358,6 +1363,7 @@ function renderKVTable(tbodyId, items, onUpdate, onDelete) {
       item.value = valInput.value;
       onUpdate();
     });
+    window.__ac.attach(valInput);
     tdVal.appendChild(valInput);
 
     const tdDel = document.createElement('td');
@@ -2115,6 +2121,9 @@ renderUrlEncoded();
 renderCookies();
 renderAssertions();
 updateBadges();
+window.__ac.init(['url-input']);
+window.__ac.attach(document.getElementById('body-json-textarea'));
+window.__search.setTargets(['response-body-pre']);
 vscode.postMessage({ type: 'ready' });
 
 /* ── 요청 전송 ─────────────────────────────────────────────── */
@@ -2374,6 +2383,7 @@ window.addEventListener('message', event => {
     loadRequest(msg.payload);
   } else if (msg.type === 'setEnvVars') {
     envVars = msg.payload ?? {};
+    window.__ac.setVars(envVars);
   }
 });
 

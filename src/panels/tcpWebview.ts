@@ -1,3 +1,5 @@
+import { SEARCH_CSS, SEARCH_JS } from './search';
+
 export const CSS = `
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -251,7 +253,7 @@ input::placeholder, textarea::placeholder { color: var(--vscode-input-placeholde
 .rule-row input[type=text] { flex: 1; min-width: 60px; font-size: 11px; padding: 3px 6px; }
 .rule-row select { font-size: 11px; padding: 3px 4px; }
 .rule-row input[type=checkbox] { cursor: pointer; }
-`;
+${SEARCH_CSS}`;
 
 export const HTML = `
 <div class="tab-bar">
@@ -356,6 +358,7 @@ export const HTML = `
 `;
 
 export const JS = `
+${SEARCH_JS}
 const vscode = acquireVsCodeApi();
 
 // ── 유틸리티 ──────────────────────────────────────────────────────────
@@ -637,6 +640,8 @@ function renderAutoReplies() {
 function syncAutoReplies() {
   vscode.postMessage({ type: 'tcp:setAutoReplies', payload: { rules: sAutoReplies } });
 }
+
+window.__search.setTargets(['c-log', 's-log']);
 
 // ── Extension 메시지 수신 ─────────────────────────────────────────────
 

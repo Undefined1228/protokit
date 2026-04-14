@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { WsClient } from '../protocols/ws/client';
 import { WsServer } from '../protocols/ws/server';
 import type { EventHandler } from '../protocols/ws/server';
+import type { ProtoKitStore } from '../storage/store';
 import { CSS, HTML, JS } from './webSocketWebview';
 
 export class WebSocketPanel {
@@ -10,6 +11,7 @@ export class WebSocketPanel {
 
   private constructor(
     private readonly panel: vscode.WebviewPanel,
+    private readonly store: ProtoKitStore,
     private readonly context: vscode.ExtensionContext,
   ) {
     this.client = new WsClient((event) => {
@@ -49,7 +51,7 @@ export class WebSocketPanel {
     });
   }
 
-  static create(context: vscode.ExtensionContext): void {
+  static create(context: vscode.ExtensionContext, store: ProtoKitStore): void {
     const panel = vscode.window.createWebviewPanel(
       'protokit.websocket',
       'WebSocket',
@@ -57,12 +59,26 @@ export class WebSocketPanel {
       { enableScripts: true, retainContextWhenHidden: true },
     );
     panel.webview.html = buildWebviewHtml();
-    const instance = new WebSocketPanel(panel, context);
+    const instance = new WebSocketPanel(panel, store, context);
     panel.webview.onDidReceiveMessage(
       (msg: { type: string; payload: unknown }) => instance.handleMessage(msg),
       null,
       context.subscriptions,
     );
+    store.onDidChange(() => instance.pushEnvVars(), context.subscriptions);
+  }
+
+  private getEnvVars(): Record<string, string> {
+    for (const col of this.store.getCollections()) {
+      if (col.activeEnvironmentId) {
+        return this.store.getActiveEnvironmentVariables(col.id);
+      }
+    }
+    return {};
+  }
+
+  private pushEnvVars(): void {
+    this.panel.webview.postMessage({ type: 'setEnvVars', payload: this.getEnvVars() });
   }
 
   private handleMessage(msg: { type: string; payload: unknown }): void {
@@ -112,6 +128,10 @@ export class WebSocketPanel {
         this.saveLog(p.text);
         break;
       }
+
+      case 'ready':
+        this.pushEnvVars();
+        break;
     }
   }
 

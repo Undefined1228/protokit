@@ -1,3 +1,6 @@
+import { AUTOCOMPLETE_CSS, AUTOCOMPLETE_JS } from './autocomplete';
+import { SEARCH_CSS, SEARCH_JS } from './search';
+
 export const CSS = `
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -330,7 +333,7 @@ input::placeholder, textarea::placeholder {
   color: var(--vscode-errorForeground); font-size: 12px; padding: 0 2px; opacity: 0.6;
 }
 .handler-del:hover { opacity: 1; }
-`;
+${AUTOCOMPLETE_CSS}${SEARCH_CSS}`;
 
 export const HTML = `
 <div class="tab-bar">
@@ -462,6 +465,8 @@ export const HTML = `
 `;
 
 export const JS = `
+${AUTOCOMPLETE_JS}
+${SEARCH_JS}
 const vscode = acquireVsCodeApi();
 
 // ── 탭 전환 ──────────────────────────────────────────────
@@ -857,11 +862,18 @@ function syncHandlers() {
 }
 
 renderHandlers();
+window.__ac.init(['ws-url']);
+window.__search.setTargets(['client-stream', 'server-stream']);
+vscode.postMessage({ type: 'ready' });
 
 // ── 확장 메시지 수신 ──────────────────────────────────────
 window.addEventListener('message', e => {
   const { type, payload } = e.data;
   switch (type) {
+    case 'setEnvVars':
+      window.__ac.setVars(payload);
+      break;
+
     case 'ws:status':
       if (payload.status === 'connecting')    setClientStatus('connecting', '연결 중...');
       else if (payload.status === 'connected') setClientStatus('connected', '연결됨');

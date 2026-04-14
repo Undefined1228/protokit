@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { SioClient } from '../protocols/socketio/client';
 import { SioServer } from '../protocols/socketio/server';
 import type { SioEventHandler } from '../protocols/socketio/server';
+import type { ProtoKitStore } from '../storage/store';
 import { CSS, HTML, JS } from './socketioWebview';
 
 export class SocketIOPanel {
@@ -10,6 +11,7 @@ export class SocketIOPanel {
 
   private constructor(
     private readonly panel: vscode.WebviewPanel,
+    private readonly store: ProtoKitStore,
     private readonly context: vscode.ExtensionContext,
   ) {
     this.client = new SioClient((event) => {
@@ -49,7 +51,7 @@ export class SocketIOPanel {
     });
   }
 
-  static create(context: vscode.ExtensionContext): void {
+  static create(context: vscode.ExtensionContext, store: ProtoKitStore): void {
     const panel = vscode.window.createWebviewPanel(
       'protokit.socketio',
       'Socket.IO',
@@ -57,12 +59,26 @@ export class SocketIOPanel {
       { enableScripts: true, retainContextWhenHidden: true },
     );
     panel.webview.html = buildWebviewHtml();
-    const instance = new SocketIOPanel(panel, context);
+    const instance = new SocketIOPanel(panel, store, context);
     panel.webview.onDidReceiveMessage(
       (msg: { type: string; payload: unknown }) => instance.handleMessage(msg),
       null,
       context.subscriptions,
     );
+    store.onDidChange(() => instance.pushEnvVars(), context.subscriptions);
+  }
+
+  private getEnvVars(): Record<string, string> {
+    for (const col of this.store.getCollections()) {
+      if (col.activeEnvironmentId) {
+        return this.store.getActiveEnvironmentVariables(col.id);
+      }
+    }
+    return {};
+  }
+
+  private pushEnvVars(): void {
+    this.panel.webview.postMessage({ type: 'setEnvVars', payload: this.getEnvVars() });
   }
 
   private handleMessage(msg: { type: string; payload: unknown }): void {
@@ -134,6 +150,10 @@ export class SocketIOPanel {
         this.saveLog(p.text);
         break;
       }
+
+      case 'ready':
+        this.pushEnvVars();
+        break;
     }
   }
 

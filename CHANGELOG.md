@@ -1,5 +1,15 @@
 # 변경 이력
 
+## [0.6.0] - 2026-04-14
+
+### 추가 — Phase QA: 환경변수 자동완성
+
+- `panels/autocomplete.ts` 신규 — `{{` 입력 감지, 접두어 필터링, 드롭다운 렌더링, 키보드 탐색(`ArrowUp`/`ArrowDown`/`Enter`/`Escape`), 선택 시 `{{변수명}}` 삽입, 포커스 해제 시 닫기. 모든 에디터에서 재사용 가능한 공유 모듈
+- **REST API 에디터**: URL · Params 값 · Headers 값 · Body(JSON) 입력창에 자동완성 적용
+- **WebSocket / GraphQL / SSE / Socket.IO 패널**: URL 입력창에 자동완성 적용
+- `WebSocketPanel`, `GraphQLPanel`, `SSEPanel`, `SocketIOPanel`에 `store` 연동 추가 — `ready` 수신 시 `setEnvVars` 전송, `store.onDidChange` 구독으로 환경변수 실시간 갱신
+- `panels/search.ts` 신규 — `Ctrl+F` / `Cmd+F` 로 결과 영역 인라인 검색. 플로팅 오버레이 UI, 실시간 하이라이트, 매치 카운트(`n / total`), `Enter`/`Shift+Enter` 이전·다음 이동, `Escape` 닫기. REST API · WebSocket · GraphQL · SSE · Socket.IO · TCP · UDP 전 패널 지원
+
 ## [0.5.0] - 2026-04-14
 
 ### 추가 — Phase 9: TCP / UDP 소켓

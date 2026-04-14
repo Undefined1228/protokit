@@ -66,19 +66,19 @@ export function activate(context: vscode.ExtensionContext) {
     }),
 
     vscode.commands.registerCommand('protokit.newWebSocket', () => {
-      WebSocketPanel.create(context);
+      WebSocketPanel.create(context, store);
     }),
 
     vscode.commands.registerCommand('protokit.newGraphQL', () => {
-      GraphQLPanel.create(context);
+      GraphQLPanel.create(context, store);
     }),
 
     vscode.commands.registerCommand('protokit.newSSE', () => {
-      SSEPanel.create(context);
+      SSEPanel.create(context, store);
     }),
 
     vscode.commands.registerCommand('protokit.newSocketIO', () => {
-      SocketIOPanel.create(context);
+      SocketIOPanel.create(context, store);
     }),
 
     vscode.commands.registerCommand('protokit.newTCP', () => {
