@@ -14,36 +14,36 @@
 
 ## 클라이언트
 
-- [ ] URL 입력
-- [ ] 네임스페이스(namespace) 설정
-- [ ] 연결 옵션: transport (websocket / polling)
-- [ ] 연결 옵션: auth payload
-- [ ] Connect 버튼
-- [ ] Disconnect 버튼
-- [ ] 연결 상태 표시
-- [ ] 이벤트 전송: event name 입력
-- [ ] 이벤트 전송: payload (JSON)
-- [ ] 이벤트 수신 스트림 뷰어: timestamp 표시
-- [ ] 이벤트 수신 스트림 뷰어: event name 표시
-- [ ] 이벤트 수신 스트림 뷰어: payload 표시
-- [ ] 이벤트 리스너 등록 (수신할 이벤트 목록 정의)
-- [ ] Room join
-- [ ] Room leave
+- [x] URL 입력
+- [x] 네임스페이스(namespace) 설정
+- [x] 연결 옵션: transport (websocket / polling)
+- [x] 연결 옵션: auth payload
+- [x] Connect 버튼
+- [x] Disconnect 버튼
+- [x] 연결 상태 표시
+- [x] 이벤트 전송: event name 입력
+- [x] 이벤트 전송: payload (JSON)
+- [x] 이벤트 수신 스트림 뷰어: timestamp 표시
+- [x] 이벤트 수신 스트림 뷰어: event name 표시
+- [x] 이벤트 수신 스트림 뷰어: payload 표시
+- [x] 이벤트 리스너 등록 (수신할 이벤트 목록 정의)
+- [x] Room join
+- [x] Room leave
 
 ## 서버
 
-- [ ] 포트 설정
-- [ ] 로컬 Socket.IO 서버 시작 / 중지
-- [ ] 네임스페이스 정의
-- [ ] 연결된 클라이언트 목록 표시 (socket id · namespace)
-- [ ] 수신 이벤트 로그
-- [ ] 이벤트 전송: 특정 클라이언트
-- [ ] 이벤트 전송: Room 단위
-- [ ] 이벤트 전송: 전체 broadcast
-- [ ] 이벤트 핸들러 정의 (이벤트 수신 시 자동 응답 규칙)
+- [x] 포트 설정
+- [x] 로컬 Socket.IO 서버 시작 / 중지
+- [x] 네임스페이스 정의
+- [x] 연결된 클라이언트 목록 표시 (socket id · namespace)
+- [x] 수신 이벤트 로그
+- [x] 이벤트 전송: 특정 클라이언트
+- [x] 이벤트 전송: Room 단위
+- [x] 이벤트 전송: 전체 broadcast
+- [x] 이벤트 핸들러 정의 (이벤트 수신 시 자동 응답 규칙)
 
 ---
 
 ## 완료 후 처리
 
-- [ ] `CHANGELOG.md`에 해당 페이즈 변경 내용 추가
+- [x] `CHANGELOG.md`에 해당 페이즈 변경 내용 추가

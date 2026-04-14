@@ -1,5 +1,19 @@
 # 변경 이력
 
+## [0.4.0] - 2026-04-14
+
+### 추가 — Phase 8: Socket.IO 클라이언트 & 서버
+
+- `protocols/socketio/client.ts` 신규 — `socket.io-client` 기반 Socket.IO 클라이언트 (`SioClient`), 네임스페이스·transport·auth 설정, 이벤트 리스너 동적 등록, Room join/leave
+- `protocols/socketio/server.ts` 신규 — `socket.io` 기반 로컬 Socket.IO 서버 (`SioServer`), 다중 네임스페이스 정의, 연결 클라이언트 추적, 자동 응답 핸들러 (이벤트명·정규식 매칭·응답 이벤트)
+- `panels/SocketIOPanel.ts` 신규 — 클라이언트/서버 연결 관리 및 webview 메시지 라우팅
+- `panels/socketioWebview.ts` 신규 — Socket.IO UI (CSS · HTML · JS)
+- **클라이언트 탭**: URL 입력, Namespace 설정, Transport 선택 (websocket / polling), Auth payload (JSON), Connect/Disconnect 버튼, 연결 상태 뱃지, 이벤트 리스너 등록 (태그 방식), 이벤트 수신 스트림 (timestamp · event name · payload), 이벤트 emit (event name · payload), Room join/leave, 로그 저장
+- **서버 탭**: 포트 설정, Namespace 정의 (쉼표 구분 다중 입력), 서버 시작/중지, 연결된 클라이언트 목록 (socket id · namespace), 이벤트 전송 — 특정 클라이언트 / Room / 전체 broadcast, 자동 응답 핸들러 (이벤트명 + 정규식 match → 응답 이벤트 + 페이로드)
+- `protokit.newSocketIO` 커맨드 추가 — `protokit.newConnectionMenu` 서브메뉴에 등록
+- `socket.io`, `socket.io-client` npm 패키지 의존성 추가
+- `tsconfig.json`에 `skipLibCheck: true` 추가 (socket.io-client 브라우저 타입 참조 해소)
+
 ## [0.3.0] - 2026-04-14
 
 ### 추가 — Phase 7: SSE (Server-Sent Events) 클라이언트 & 서버

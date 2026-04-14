@@ -4,6 +4,7 @@ import { CollectionRunnerPanel } from './panels/CollectionRunnerPanel';
 import { WebSocketPanel } from './panels/WebSocketPanel';
 import { GraphQLPanel } from './panels/GraphQLPanel';
 import { SSEPanel } from './panels/SSEPanel';
+import { SocketIOPanel } from './panels/SocketIOPanel';
 import { ProtoKitStore } from './storage/store';
 import { CollectionTreeProvider, CollectionItem, RequestItem } from './providers/CollectionTreeProvider';
 import { HistoryTreeProvider, HistoryItem } from './providers/HistoryTreeProvider';
@@ -71,6 +72,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.commands.registerCommand('protokit.newSSE', () => {
       SSEPanel.create(context);
+    }),
+
+    vscode.commands.registerCommand('protokit.newSocketIO', () => {
+      SocketIOPanel.create(context);
     }),
 
     vscode.commands.registerCommand('protokit.openSavedRequest', (item: RequestItem) => {

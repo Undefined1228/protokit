@@ -81,6 +81,12 @@
         "icon": "$(radio-tower)"
       },
       {
+        "command": "protokit.newSocketIO",
+        "title": "새 Socket.IO",
+        "category": "ProtoKit",
+        "icon": "$(plug)"
+      },
+      {
         "command": "protokit.newCollection",
         "title": "새 컬렉션",
         "category": "ProtoKit",
@@ -215,6 +221,10 @@
         {
           "command": "protokit.newSSE",
           "group": "1@4"
+        },
+        {
+          "command": "protokit.newSocketIO",
+          "group": "1@5"
         }
       ],
       "view/item/context": [
@@ -299,6 +309,8 @@
   "dependencies": {
     "graphql": "^16.13.2",
     "graphql-ws": "^6.0.8",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "ws": "^8.20.0"
   }
 }

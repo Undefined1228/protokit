@@ -45,6 +45,8 @@
 │   │   ├── graphqlWebview.ts
 │   │   ├── RequestEditorPanel.ts
 │   │   ├── requestEditorWebview.ts
+│   │   ├── SocketIOPanel.ts
+│   │   ├── socketioWebview.ts
 │   │   ├── SSEPanel.ts
 │   │   ├── sseWebview.ts
 │   │   ├── WebSocketPanel.ts
@@ -55,6 +57,9 @@
 │   │   │   └── server.ts
 │   │   ├── http
 │   │   │   └── client.ts
+│   │   ├── socketio
+│   │   │   ├── client.ts
+│   │   │   └── server.ts
 │   │   ├── sse
 │   │   │   ├── client.ts
 │   │   │   └── server.ts
@@ -69,4 +74,4 @@
 ├── tree.txt
 └── tsconfig.json
 
-14 directories, 56 files
+15 directories, 60 files
