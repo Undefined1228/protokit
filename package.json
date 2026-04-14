@@ -58,7 +58,7 @@
     "commands": [
       {
         "command": "protokit.newRequest",
-        "title": "새 요청",
+        "title": "새 REST API 요청",
         "category": "ProtoKit",
         "icon": "$(add)"
       },
