@@ -97,11 +97,13 @@ export const SEARCH_JS = `
   }
 
   function clearMarks() {
+    const parents = new Set();
     _marks.forEach(m => {
       if (!m.parentNode) return;
+      parents.add(m.parentNode);
       m.parentNode.replaceChild(document.createTextNode(m.textContent), m);
-      m.parentNode && m.parentNode.normalize();
     });
+    parents.forEach(p => p.normalize());
     _marks = [];
   }
 
@@ -178,6 +180,10 @@ export const SEARCH_JS = `
       overlay.style.display !== 'none' ? (document.getElementById('_si').focus(), document.getElementById('_si').select()) : open();
     }
     if (e.key === 'Escape' && overlay.style.display !== 'none') close();
+  });
+
+  window.addEventListener('message', e => {
+    if (e.data && e.data.type === 'openSearch') open();
   });
 
   window.__search = { setTargets };

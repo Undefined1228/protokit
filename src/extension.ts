@@ -12,6 +12,7 @@ import { ProtoKitStore } from './storage/store';
 import { CollectionTreeProvider, CollectionItem, RequestItem } from './providers/CollectionTreeProvider';
 import { HistoryTreeProvider, HistoryItem } from './providers/HistoryTreeProvider';
 import type { SavedRequest } from './storage/store';
+import { triggerSearch } from './panels/searchRegistry';
 
 export function activate(context: vscode.ExtensionContext) {
   const store = new ProtoKitStore(context);
@@ -170,6 +171,8 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('protokit.search', () => {
       searchCollections(store, context);
     }),
+
+    vscode.commands.registerCommand('protokit.openInlineSearch', triggerSearch),
   );
 }
 

@@ -3,6 +3,7 @@ import { GqlClient } from '../protocols/graphql/client';
 import { GqlServer } from '../protocols/graphql/server';
 import type { ProtoKitStore } from '../storage/store';
 import { CSS, HTML, JS } from './graphqlWebview';
+import { registerPanel } from './searchRegistry';
 
 export class GraphQLPanel {
   private client: GqlClient;
@@ -60,6 +61,7 @@ export class GraphQLPanel {
       vscode.ViewColumn.Active,
       { enableScripts: true, retainContextWhenHidden: true },
     );
+    registerPanel(panel);
     panel.webview.html = buildWebviewHtml();
     const instance = new GraphQLPanel(panel, store, context);
     panel.webview.onDidReceiveMessage(

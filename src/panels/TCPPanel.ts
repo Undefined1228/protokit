@@ -3,6 +3,7 @@ import { TcpClient } from '../protocols/tcp/client';
 import { TcpServer } from '../protocols/tcp/server';
 import type { TcpAutoReply } from '../protocols/tcp/server';
 import { CSS, HTML, JS } from './tcpWebview';
+import { registerPanel } from './searchRegistry';
 
 export class TCPPanel {
   private client: TcpClient;
@@ -56,6 +57,7 @@ export class TCPPanel {
       vscode.ViewColumn.Active,
       { enableScripts: true, retainContextWhenHidden: true },
     );
+    registerPanel(panel);
     panel.webview.html = buildWebviewHtml();
     const instance = new TCPPanel(panel, context);
     panel.webview.onDidReceiveMessage(

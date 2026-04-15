@@ -3,6 +3,7 @@ import { SioClient } from '../protocols/socketio/client';
 import { SioServer } from '../protocols/socketio/server';
 import type { SioEventHandler } from '../protocols/socketio/server';
 import type { ProtoKitStore } from '../storage/store';
+import { registerPanel } from './searchRegistry';
 import { CSS, HTML, JS } from './socketioWebview';
 
 export class SocketIOPanel {
@@ -58,6 +59,7 @@ export class SocketIOPanel {
       vscode.ViewColumn.Active,
       { enableScripts: true, retainContextWhenHidden: true },
     );
+    registerPanel(panel);
     panel.webview.html = buildWebviewHtml();
     const instance = new SocketIOPanel(panel, store, context);
     panel.webview.onDidReceiveMessage(

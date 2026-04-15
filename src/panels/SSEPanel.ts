@@ -3,6 +3,7 @@ import { SseClient } from '../protocols/sse/client';
 import { SseServer } from '../protocols/sse/server';
 import type { ProtoKitStore } from '../storage/store';
 import { CSS, HTML, JS } from './sseWebview';
+import { registerPanel } from './searchRegistry';
 
 export class SSEPanel {
   private client: SseClient;
@@ -54,6 +55,7 @@ export class SSEPanel {
       vscode.ViewColumn.Active,
       { enableScripts: true, retainContextWhenHidden: true },
     );
+    registerPanel(panel);
     panel.webview.html = buildWebviewHtml();
     const instance = new SSEPanel(panel, store, context);
     panel.webview.onDidReceiveMessage(

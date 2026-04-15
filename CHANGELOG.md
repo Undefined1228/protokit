@@ -1,5 +1,14 @@
 # 변경 이력
 
+## [0.7.0] - 2026-04-14
+
+### 개선 — 인라인 검색 키보드 단축키 & 안정성
+
+- `panels/searchRegistry.ts` 신규 — 열린 webview 패널을 레지스트리에서 추적. `registerPanel()`로 패널 등록(dispose 시 자동 제거), `triggerSearch()`로 활성 패널에 `openSearch` 메시지 전달
+- `protokit.openInlineSearch` 커맨드 신규 등록 — `Ctrl+F` / `Cmd+F` VS Code keybinding으로 활성 패널의 인라인 검색 오버레이 실행. `when` 조건으로 ProtoKit 패널 활성 시에만 동작
+- 모든 패널(`RequestEditor`, `WebSocket`, `GraphQL`, `SSE`, `SocketIO`, `TCP`, `UDP`)에 `registerPanel()` 등록 추가
+- `clearMarks()` 버그 수정 — 노드 제거 후 부모 Set을 수집해 `normalize()` 중복 호출 방지
+
 ## [0.6.0] - 2026-04-14
 
 ### 추가 — Phase QA: 환경변수 자동완성

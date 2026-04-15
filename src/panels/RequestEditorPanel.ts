@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { sendHttpRequest, type HttpRequestOptions } from '../protocols/http/client';
 import type { ProtoKitStore, SavedRequest, Assertion } from '../storage/store';
 import { CSS, HTML, JS } from './requestEditorWebview';
+import { registerPanel } from './searchRegistry';
 
 interface KVRow {
   enabled: boolean;
@@ -73,6 +74,7 @@ export class RequestEditorPanel {
       vscode.ViewColumn.Active,
       { enableScripts: true, retainContextWhenHidden: true },
     );
+    registerPanel(panel);
     const editor = new RequestEditorPanel(panel, store, context, initialRequest, collId);
     panel.webview.onDidReceiveMessage(
       (msg: { type: string; payload: unknown }) => editor.handleMessage(msg),

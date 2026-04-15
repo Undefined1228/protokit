@@ -3,6 +3,7 @@ import { WsClient } from '../protocols/ws/client';
 import { WsServer } from '../protocols/ws/server';
 import type { EventHandler } from '../protocols/ws/server';
 import type { ProtoKitStore } from '../storage/store';
+import { registerPanel } from './searchRegistry';
 import { CSS, HTML, JS } from './webSocketWebview';
 
 export class WebSocketPanel {
@@ -58,6 +59,7 @@ export class WebSocketPanel {
       vscode.ViewColumn.Active,
       { enableScripts: true, retainContextWhenHidden: true },
     );
+    registerPanel(panel);
     panel.webview.html = buildWebviewHtml();
     const instance = new WebSocketPanel(panel, store, context);
     panel.webview.onDidReceiveMessage(

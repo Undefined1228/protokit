@@ -3,6 +3,7 @@ import { UdpClient } from '../protocols/udp/client';
 import { UdpServer } from '../protocols/udp/server';
 import type { UdpAutoReply } from '../protocols/udp/server';
 import { CSS, HTML, JS } from './udpWebview';
+import { registerPanel } from './searchRegistry';
 
 export class UDPPanel {
   private client: UdpClient;
@@ -50,6 +51,7 @@ export class UDPPanel {
       vscode.ViewColumn.Active,
       { enableScripts: true, retainContextWhenHidden: true },
     );
+    registerPanel(panel);
     panel.webview.html = buildWebviewHtml();
     const instance = new UDPPanel(panel, context);
     panel.webview.onDidReceiveMessage(

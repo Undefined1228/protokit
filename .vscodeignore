@@ -13,3 +13,4 @@ plans/**
 tree.txt
 .claude/**
 eslint.config.mjs
+docs/**

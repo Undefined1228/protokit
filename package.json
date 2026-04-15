@@ -3,7 +3,7 @@
   "publisher": "ach9948",
   "displayName": "ProtoKit",
   "description": "REST API and multi-protocol testing tool for VS Code",
-  "version": "0.3.0",
+  "version": "0.7.0",
   "icon": "media/icon.png",
   "license": "MIT",
   "keywords": [
@@ -175,6 +175,19 @@
         "title": "컬렉션 실행",
         "category": "ProtoKit",
         "icon": "$(play)"
+      },
+      {
+        "command": "protokit.openInlineSearch",
+        "title": "인라인 검색 열기",
+        "category": "ProtoKit"
+      }
+    ],
+    "keybindings": [
+      {
+        "key": "ctrl+f",
+        "mac": "cmd+f",
+        "command": "protokit.openInlineSearch",
+        "when": "activeWebviewPanelId == 'protokit.requestEditor' || activeWebviewPanelId == 'protokit.websocket' || activeWebviewPanelId == 'protokit.graphql' || activeWebviewPanelId == 'protokit.sse' || activeWebviewPanelId == 'protokit.socketio' || activeWebviewPanelId == 'protokit.tcp' || activeWebviewPanelId == 'protokit.udp'"
       }
     ],
     "viewsWelcome": [
