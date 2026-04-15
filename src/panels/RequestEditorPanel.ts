@@ -114,6 +114,9 @@ export class RequestEditorPanel {
       case 'saveRequest':
         this.handleSaveRequest(msg.payload as SaveRequestPayload);
         break;
+      case 'copyToClipboard':
+        vscode.env.clipboard.writeText(msg.payload as string);
+        break;
       case 'ready':
         if (this.initialRequest) {
           this.panel.webview.postMessage({ type: 'loadRequest', payload: this.initialRequest });

@@ -132,13 +132,18 @@ body {
 .tab-content {
   display: flex;
   flex-direction: column;
-  min-height: 220px;
+  flex: 1;
+  min-height: 120px;
+  overflow: hidden;
 }
 
 .tab-pane {
   display: flex;
   flex-direction: column;
-  min-height: 220px;
+  flex: 1;
+  min-height: 0;
+  background: var(--vscode-editor-background);
+  overflow: hidden;
 }
 .tab-pane[hidden] { display: none; }
 
@@ -331,6 +336,8 @@ table.kv-table tbody td:last-child  { text-align: center; }
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow-y: auto;
+  flex: 1;
 }
 .auth-field {
   display: flex;
@@ -480,9 +487,33 @@ table.kv-table tbody td:last-child  { text-align: center; }
 /* ── Main scroll area ──────────────────────────────────────── */
 .main-scroll {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+/* ── Vertical resizer ──────────────────────────────────────── */
+.v-resizer {
+  flex-shrink: 0;
+  height: 6px;
+  cursor: row-resize;
+  background: var(--vscode-panel-border);
+  position: relative;
+  transition: background 0.1s;
+}
+.v-resizer:hover,
+.v-resizer.dragging { background: var(--vscode-focusBorder); }
+.v-resizer::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--vscode-editor-background);
+  opacity: 0.6;
 }
 
 /* ── Response area ─────────────────────────────────────────── */
@@ -490,7 +521,9 @@ table.kv-table tbody td:last-child  { text-align: center; }
   border-top: 2px solid var(--vscode-panel-border);
   display: flex;
   flex-direction: column;
-  min-height: 220px;
+  flex: 1;
+  overflow: hidden;
+  min-height: 120px;
 }
 
 .response-header {
@@ -717,8 +750,92 @@ table.kv-table tbody td:last-child  { text-align: center; }
   background: var(--vscode-button-secondaryHoverBackground);
 }
 
+/* Request params / headers table resizable */
+table.kv-table.kv-resizable { table-layout: fixed; }
+table.kv-table.kv-resizable thead th {
+  border-top: 1px solid var(--vscode-panel-border);
+  border-bottom: 2px solid var(--vscode-panel-border);
+  border-left: none;
+  border-right: none;
+}
+table.kv-table.kv-resizable tbody td {
+  border-top: 1px solid var(--vscode-panel-border);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  border-left: none;
+  border-right: none;
+}
+table.kv-table.kv-resizable thead th { position: relative; }
+.kv-col-resizer {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  user-select: none;
+}
+.kv-col-resizer:hover,
+.kv-col-resizer.dragging { background: var(--vscode-focusBorder); }
+
+/* Header value popover */
+.header-val-popover {
+  position: fixed;
+  z-index: 1000;
+  background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+  border: 1px solid var(--vscode-editorWidget-border, var(--vscode-panel-border));
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  padding: 8px 10px;
+  max-width: 480px;
+  min-width: 200px;
+  font-size: 12px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  word-break: break-all;
+  line-height: 1.5;
+}
+.header-val-popover-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.header-val-popover-copy {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: none;
+  border-radius: 3px;
+  padding: 3px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.header-val-popover-copy:hover { background: var(--vscode-button-hoverBackground); }
+
 /* Response headers table */
-.res-headers-table thead th:first-child { width: 220px; }
+.res-headers-table { table-layout: fixed; border-collapse: collapse; }
+.res-headers-table thead th {
+  border-top: 1px solid var(--vscode-panel-border);
+  border-bottom: 2px solid var(--vscode-panel-border);
+  border-left: none;
+  border-right: none;
+}
+.res-headers-table tbody td {
+  border-top: 1px solid var(--vscode-panel-border);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  border-left: none;
+  border-right: none;
+}
+table.kv-table.res-headers-table tbody td:first-child,
+table.kv-table.res-headers-table tbody td:last-child { text-align: left; }
+.res-headers-table thead th:first-child,
+.res-headers-table tbody td:first-child { width: 50%; text-align: left; }
+.res-headers-table thead th:last-child,
+.res-headers-table tbody td:last-child  { width: 50%; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.res-headers-col-resizer {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  user-select: none;
+}
+.res-headers-col-resizer:hover,
+.res-headers-col-resizer.dragging { background: var(--vscode-focusBorder); }
 
 /* ── History panel ─────────────────────────────────────────── */
 .history-toggle-btn {
@@ -1003,9 +1120,9 @@ export const HTML = `
   <!-- Params -->
   <div class="tab-pane" id="tab-params">
     <div class="kv-table-container">
-      <table class="kv-table">
+      <table class="kv-table kv-resizable" id="params-table">
         <thead>
-          <tr><th></th><th>Key</th><th>Value</th><th></th></tr>
+          <tr><th></th><th>Key<div class="kv-col-resizer"></div></th><th>Value</th><th></th></tr>
         </thead>
         <tbody id="params-tbody"></tbody>
       </table>
@@ -1015,9 +1132,9 @@ export const HTML = `
   <!-- Headers -->
   <div class="tab-pane" id="tab-headers" hidden>
     <div class="kv-table-container">
-      <table class="kv-table">
+      <table class="kv-table kv-resizable" id="req-headers-table">
         <thead>
-          <tr><th></th><th>Key</th><th>Value</th><th></th></tr>
+          <tr><th></th><th>Key<div class="kv-col-resizer"></div></th><th>Value</th><th></th></tr>
         </thead>
         <tbody id="headers-tbody"></tbody>
       </table>
@@ -1120,9 +1237,9 @@ export const HTML = `
   <!-- Cookies -->
   <div class="tab-pane" id="tab-cookies" hidden>
     <div class="kv-table-container">
-      <table class="kv-table">
+      <table class="kv-table kv-resizable" id="cookies-table">
         <thead>
-          <tr><th></th><th>Name</th><th>Value</th><th>Domain</th><th></th></tr>
+          <tr><th></th><th style="position:relative;">Name<div class="kv-col-resizer"></div></th><th style="position:relative;">Value<div class="kv-col-resizer"></div></th><th>Domain</th><th></th></tr>
         </thead>
         <tbody id="cookies-tbody"></tbody>
       </table>
@@ -1132,9 +1249,9 @@ export const HTML = `
   <!-- Assertions -->
   <div class="tab-pane" id="tab-assertions" hidden>
     <div class="kv-table-container">
-      <table class="kv-table">
+      <table class="kv-table kv-resizable" id="assertions-table">
         <thead>
-          <tr><th></th><th>유형</th><th>경로</th><th>조건</th><th>값</th><th></th></tr>
+          <tr><th></th><th style="position:relative;">유형<div class="kv-col-resizer"></div></th><th style="position:relative;">경로<div class="kv-col-resizer"></div></th><th style="position:relative;">조건<div class="kv-col-resizer"></div></th><th>값</th><th></th></tr>
         </thead>
         <tbody id="assertions-tbody"></tbody>
       </table>
@@ -1142,6 +1259,7 @@ export const HTML = `
   </div>
 </div>
 
+<div class="v-resizer" id="v-resizer" hidden></div>
 <div class="response-area" id="response-area" hidden>
   <div class="response-header">
     <span class="response-title">응답</span>
@@ -1168,7 +1286,7 @@ export const HTML = `
   <div class="res-pane" id="res-pane-headers" hidden>
     <div class="kv-table-container">
       <table class="kv-table res-headers-table">
-        <thead><tr><th>Name</th><th>Value</th></tr></thead>
+        <thead><tr><th style="position:relative;">Name<div class="res-headers-col-resizer" id="res-headers-col-resizer"></div></th><th>Value</th></tr></thead>
         <tbody id="res-headers-tbody"></tbody>
       </table>
     </div>
@@ -2124,6 +2242,8 @@ updateBadges();
 window.__ac.init(['url-input']);
 window.__ac.attach(document.getElementById('body-json-textarea'));
 window.__search.setTargets(['response-body-pre']);
+
+
 vscode.postMessage({ type: 'ready' });
 
 /* ── 요청 전송 ─────────────────────────────────────────────── */
@@ -2273,6 +2393,7 @@ function showResponse(res) {
 
   const area = document.getElementById('response-area');
   area.hidden = false;
+  showVResizer();
 
   const statusEl = document.getElementById('res-status');
   statusEl.textContent = res.status + ' ' + res.statusText;
@@ -2318,12 +2439,12 @@ function showResponse(res) {
     Object.entries(res.headers).forEach(([k, v]) => {
       const tr = document.createElement('tr');
       const tdK = document.createElement('td');
-      tdK.className = 'kv-input';
       tdK.style.cssText = 'padding:3px 8px; font-size:12px; font-family:var(--vscode-editor-font-family,monospace);';
       tdK.textContent = k;
       const tdV = document.createElement('td');
-      tdV.style.cssText = 'padding:3px 8px; font-size:12px; word-break:break-all;';
+      tdV.style.cssText = 'padding:3px 8px; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer;';
       tdV.textContent = v;
+      tdV.addEventListener('click', e => { e.stopPropagation(); showHeaderPopover(e.currentTarget, v); });
       tr.append(tdK, tdV);
       headersTbody.appendChild(tr);
     });
@@ -2352,6 +2473,7 @@ function showError(message) {
 
   const area = document.getElementById('response-area');
   area.hidden = false;
+  showVResizer();
 
   const statusEl = document.getElementById('res-status');
   statusEl.textContent = '오류';
@@ -2645,14 +2767,11 @@ function copyExport(fmt) {
     default: return;
   }
 
-  navigator.clipboard.writeText(text).catch(() => {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-  });
+  copyToClipboard(text);
+}
+
+function copyToClipboard(text) {
+  vscode.postMessage({ type: 'copyToClipboard', payload: text });
 }
 
 const exportBtn = document.getElementById('export-btn');
@@ -2672,5 +2791,165 @@ exportMenu.querySelectorAll('button[data-fmt]').forEach(btn => {
 
 document.addEventListener('click', () => {
   exportMenu.hidden = true;
+});
+
+/* ── 응답 헤더 컬럼 리사이저 ───────────────────────────────── */
+(function() {
+  const resizer = document.getElementById('res-headers-col-resizer');
+  const table = resizer.closest('table');
+  const nameCol = table.querySelector('thead th:first-child');
+
+  resizer.addEventListener('mousedown', e => {
+    resizer.classList.add('dragging');
+    e.preventDefault();
+    e.stopPropagation();
+
+    function onMove(e) {
+      const rect = table.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width * 100;
+      nameCol.style.width = Math.min(Math.max(pct, 20), 80) + '%';
+    }
+    function onUp() {
+      resizer.classList.remove('dragging');
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+})();
+
+/* ── 요청 kv 테이블 컬럼 리사이저 ──────────────────────────── */
+function initKvColResizer(table, targetCol, resizer) {
+  resizer.addEventListener('mousedown', function(e) {
+    resizer.classList.add('dragging');
+    e.preventDefault();
+    e.stopPropagation();
+
+    const startX = e.clientX;
+    const startWidth = targetCol.offsetWidth;
+    const firstW = table.querySelector('thead th:first-child').offsetWidth;
+    const lastW = table.querySelector('thead th:last-child').offsetWidth;
+    const available = table.offsetWidth - firstW - lastW;
+
+    function onMove(e) {
+      const px = Math.min(Math.max(startWidth + (e.clientX - startX), available * 0.05), available * 0.9);
+      targetCol.style.width = px + 'px';
+    }
+    function onUp() {
+      resizer.classList.remove('dragging');
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+}
+
+['params-table', 'req-headers-table'].forEach(function(tableId) {
+  const table = document.getElementById(tableId);
+  initKvColResizer(table, table.querySelector('thead th:nth-child(2)'), table.querySelector('.kv-col-resizer'));
+});
+
+(function() {
+  const table = document.getElementById('cookies-table');
+  const ths = table.querySelectorAll('thead th');
+  const resizers = table.querySelectorAll('.kv-col-resizer');
+  initKvColResizer(table, ths[1], resizers[0]);
+  initKvColResizer(table, ths[2], resizers[1]);
+})();
+
+(function() {
+  const table = document.getElementById('assertions-table');
+  const ths = table.querySelectorAll('thead th');
+  const resizers = table.querySelectorAll('.kv-col-resizer');
+  initKvColResizer(table, ths[1], resizers[0]);
+  initKvColResizer(table, ths[2], resizers[1]);
+  initKvColResizer(table, ths[3], resizers[2]);
+})();
+
+/* ── 응답 헤더 값 팝오버 ────────────────────────────────────── */
+let _headerPopover = null;
+
+function showHeaderPopover(cell, value) {
+  closeHeaderPopover();
+
+  const popover = document.createElement('div');
+  popover.className = 'header-val-popover';
+  popover.textContent = value;
+
+  const actions = document.createElement('div');
+  actions.className = 'header-val-popover-actions';
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'header-val-popover-copy';
+  copyBtn.textContent = '복사';
+  copyBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    copyToClipboard(value);
+    closeHeaderPopover();
+  });
+  actions.appendChild(copyBtn);
+  popover.appendChild(actions);
+
+  document.body.appendChild(popover);
+  _headerPopover = popover;
+
+  const rect = cell.getBoundingClientRect();
+  const pw = popover.offsetWidth;
+  const ph = popover.offsetHeight;
+  let top = rect.bottom + 4;
+  let left = rect.left;
+  if (left + pw > window.innerWidth - 8) { left = window.innerWidth - pw - 8; }
+  if (top + ph > window.innerHeight - 8) { top = rect.top - ph - 4; }
+  popover.style.top = top + 'px';
+  popover.style.left = left + 'px';
+}
+
+function closeHeaderPopover() {
+  if (_headerPopover) {
+    _headerPopover.remove();
+    _headerPopover = null;
+  }
+}
+
+document.addEventListener('click', closeHeaderPopover);
+
+/* ── 수직 리사이저 ──────────────────────────────────────────── */
+const _vResizer = document.getElementById('v-resizer');
+const _tabContent = document.querySelector('.tab-content');
+const _mainScroll = document.querySelector('.main-scroll');
+
+function showVResizer() {
+  if (_vResizer.hidden) {
+    _vResizer.hidden = false;
+    document.getElementById('response-area').style.borderTop = 'none';
+    const tabBar = _mainScroll.querySelector('.tab-bar');
+    const usedH = tabBar.offsetHeight + _vResizer.offsetHeight;
+    const available = _mainScroll.clientHeight - usedH;
+    const half = Math.floor(available / 2);
+    _tabContent.style.flex = 'none';
+    _tabContent.style.height = Math.max(half, 120) + 'px';
+  }
+}
+
+_vResizer.addEventListener('mousedown', e => {
+  e.preventDefault();
+  _vResizer.classList.add('dragging');
+
+  function onMove(e) {
+    const scrollRect = _mainScroll.getBoundingClientRect();
+    const tabBar = _mainScroll.querySelector('.tab-bar');
+    const newH = e.clientY - scrollRect.top - tabBar.offsetHeight;
+    const minH = 120;
+    const maxH = _mainScroll.clientHeight - tabBar.offsetHeight - _vResizer.offsetHeight - minH;
+    _tabContent.style.height = Math.min(Math.max(newH, minH), maxH) + 'px';
+  }
+  function onUp() {
+    _vResizer.classList.remove('dragging');
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
 });
 `;

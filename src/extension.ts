@@ -19,10 +19,11 @@ export function activate(context: vscode.ExtensionContext) {
   const collectionProvider = new CollectionTreeProvider(store);
   const historyProvider = new HistoryTreeProvider(store);
 
-  vscode.window.createTreeView('protokit.collections', {
+  const collectionView = vscode.window.createTreeView('protokit.collections', {
     treeDataProvider: collectionProvider,
     showCollapseAll: true,
   });
+  collectionView.description = `v${context.extension.packageJSON.version}`;
 
   vscode.window.createTreeView('protokit.history', {
     treeDataProvider: historyProvider,
