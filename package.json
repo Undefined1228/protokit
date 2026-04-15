@@ -3,7 +3,7 @@
   "publisher": "ach9948",
   "displayName": "ProtoKit",
   "description": "REST API and multi-protocol testing tool for VS Code",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "icon": "media/icon.png",
   "license": "MIT",
   "keywords": [
